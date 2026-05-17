@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flint Admin Console Prototype</title>
+  <style>
+    :root {
+      --primary: #1677FF;
+      --secondary: #8B5CF6;
+      --success: #16A34A;
+      --warning: #D97706;
+      --danger: #DC2626;
+      --surface: #FFFFFF;
+      --text: #111827;
+      --neutral: #FFFFFF;
+      --bg: color-mix(in srgb, var(--surface) 96%, var(--primary) 4%);
+      --muted: color-mix(in srgb, var(--text) 58%, var(--surface));
+      --subtle: color-mix(in srgb, var(--text) 5%, var(--surface));
+      --border: color-mix(in srgb, var(--text) 12%, var(--surface));
+      --primary-soft: color-mix(in srgb, var(--primary) 12%, var(--surface));
+      --success-soft: color-mix(in srgb, var(--success) 12%, var(--surface));
+      --warning-soft: color-mix(in srgb, var(--warning) 14%, var(--surface));
+      --danger-soft: color-mix(in srgb, var(--danger) 12%, var(--surface));
+      --secondary-soft: color-mix(in srgb, var(--secondary) 12%, var(--surface));
+      --shadow: 0 1px 2px color-mix(in srgb, var(--text) 10%, transparent);
+      --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+    body { margin: 0; min-width: 1180px; background: var(--bg); }
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 256px minmax(920px, 1fr) 360px;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-inline-end: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 4px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background: var(--primary);
+      color: var(--surface);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .brand strong { display: block; font-size: 15px; line-height: 1.2; }
+    .brand span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .nav-group { display: grid; gap: 6px; }
+    .nav-label { font-size: 12px; color: var(--muted); margin: 0 8px 4px; }
+    .nav-button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      text-align: start;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 40px;
+    }
+    .nav-button[aria-pressed="true"] {
+      background: var(--primary-soft);
+      color: var(--text);
+      font-weight: 700;
+    }
+    .count {
+      min-width: 26px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: var(--subtle);
+      color: var(--muted);
+      display: inline-grid;
+      place-items: center;
+      font: 700 11px/1 var(--font-mono);
+    }
+
+    .operator-card {
+      margin-top: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .operator-card p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .operator-card strong { display: block; font-size: 13px; margin-bottom: 6px; }
+
+    .workspace {
+      padding: 20px 24px 40px;
+      min-width: 0;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .title-block h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .title-block p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+
+    .sample-banner {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow);
+    }
+    .sample-banner strong { color: var(--text); font-weight: 700; }
+
+    .button {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius);
+      min-height: 36px;
+      padding: 0 12px;
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .button.primary { background: var(--primary); border-color: var(--primary); color: var(--surface); }
+    .button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, var(--surface)); }
+    .button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 2fr repeat(4, minmax(120px, 1fr)) auto;
+      gap: 8px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .toolbar.compact { grid-template-columns: 2fr repeat(3, minmax(130px, 1fr)) auto; }
+    .field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+    .field span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1;
+    }
+    .field input, .field select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      min-height: 36px;
+      padding: 0 10px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .grid-2 { display: grid; grid-template-columns: 1.25fr .75fr; gap: 12px; margin-bottom: 16px; }
+
+    .metric, .panel, .content-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .metric { padding: 14px; min-height: 112px; }
+    .metric .label, .panel .eyebrow, .content-card .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .metric .value {
+      font: 800 28px/1 var(--font-mono);
+      color: var(--text);
+    }
+    .metric .delta { margin-top: 9px; font-size: 12px; color: var(--muted); }
+    .metric .delta.good { color: var(--success); }
+    .metric .delta.warn { color: var(--warning); }
+
+    .panel-header {
+      min-height: 48px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel-header h2 {
+      font-size: 16px;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .panel-header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .panel-body { padding: 14px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    caption {
+      text-align: start;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 0 10px;
+    }
+    th {
+      text-align: start;
+      color: var(--muted);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 92%, var(--text) 8%);
+      padding: 9px 10px;
+      white-space: nowrap;
+    }
+    td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px;
+      vertical-align: middle;
+    }
+    tbody tr { background: var(--surface); }
+    tbody tr:hover { background: var(--primary-soft); }
+    tbody tr[data-detail], .content-card[data-detail], .audit-row[data-detail] { cursor: pointer; }
+    .content-card[data-detail]:hover, .audit-row[data-detail]:hover { background: var(--primary-soft); }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .muted { color: var(--muted); }
+    .row-title { display: grid; gap: 3px; }
+    .row-title strong { font-size: 13px; }
+    .row-title span { color: var(--muted); font-size: 12px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge.blue { color: var(--primary); background: var(--primary-soft); border-color: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
+    .badge.green { color: var(--success); background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 22%, var(--surface)); }
+    .badge.orange { color: var(--warning); background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 26%, var(--surface)); }
+    .badge.red { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 22%, var(--surface)); }
+    .badge.purple { color: var(--secondary); background: var(--secondary-soft); border-color: color-mix(in srgb, var(--secondary) 22%, var(--surface)); }
+    .badge.gray { color: var(--muted); background: var(--subtle); border-color: var(--border); }
+
+    .screenshot {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      min-height: 132px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 28px 1fr;
+    }
+    .shot-top {
+      border-bottom: 1px solid var(--border);
+      background: var(--subtle);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 9px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+    .shot-body {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+    .shot-thumb {
+      background: var(--primary-soft);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .shot-lines { display: grid; align-content: center; gap: 7px; }
+    .line { height: 8px; border-radius: 999px; background: var(--border); }
+    .line.short { width: 58%; }
+    .line.mid { width: 76%; }
+
+    .content-card { padding: 12px; display: grid; gap: 10px; }
+    .content-card h3 { margin: 0; font-size: 14px; line-height: 1.3; }
+    .card-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+
+    .queue-list { display: grid; gap: 10px; }
+    .queue-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .queue-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .queue-item strong { display: block; font-size: 13px; margin-bottom: 4px; }
+    .queue-item span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .bar-chart { display: grid; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 118px 1fr 58px; gap: 10px; align-items: center; font-size: 12px; }
+    .bar-track { height: 10px; border-radius: 999px; background: var(--subtle); overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--primary); border-radius: inherit; }
+
+    .audit-stream { display: grid; gap: 0; }
+    .audit-row {
+      display: grid;
+      grid-template-columns: 112px 1fr 96px;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .audit-row:last-child { border-bottom: 0; }
+
+    .drawer {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-inline-start: 1px solid var(--border);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .drawer-header {
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+    }
+    .drawer-header h2 { margin: 0; font-size: 18px; line-height: 1.25; }
+    .drawer-header p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .drawer-body { padding: 18px; overflow: auto; display: grid; align-content: start; gap: 16px; }
+    .drawer-section {
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+    }
+    .drawer-section:first-child { padding-top: 0; border-top: 0; }
+    .drawer-section h3 { margin: 0; font-size: 13px; }
+    .key-values { display: grid; gap: 7px; }
+    .key-values div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+    .key-values span:first-child { color: var(--muted); }
+    .drawer-actions {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .split-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      min-height: 96px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      background: var(--surface);
+    }
+
+    @media (max-width: 1260px) {
+      body { min-width: 1040px; }
+      .app { grid-template-columns: 224px minmax(760px, 1fr); }
+      .drawer { display: none; }
+      .toolbar, .toolbar.compact { grid-template-columns: 1fr 1fr 1fr; }
+      .toolbar .button { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Flint admin navigation">
+      <div class="brand">
+        <div class="brand-mark">F</div>
+        <div>
+          <strong>Flint Admin</strong>
+          <span>Operator workspace</span>
+        </div>
+      </div>
+
+      <nav class="nav-group" aria-label="Screens">
+        <p class="nav-label">Workspace</p>
+        <button class="nav-button" data-screen="overview" aria-pressed="true">Overview <span class="count">24</span></button>
+        <button class="nav-button" data-screen="users" aria-pressed="false">Users <span class="count">8</span></button>
+        <button class="nav-button" data-screen="content" aria-pressed="false">Content <span class="count">16</span></button>
+        <button class="nav-button" data-screen="moderation" aria-pressed="false">Moderation <span class="count">11</span></button>
+        <button class="nav-button" data-screen="analytics" aria-pressed="false">Analytics <span class="count">5</span></button>
+      </nav>
+
+      <nav class="nav-group" aria-label="Admin utilities">
+        <p class="nav-label">Service tools</p>
+        <button class="nav-button" data-screen="analytics" aria-pressed="false">Audit log <span class="count">91</span></button>
+        <button class="nav-button" data-screen="content" aria-pressed="false">Search quality <span class="count">7</span></button>
+      </nav>
+
+      <div class="operator-card">
+        <strong>Role: Ops lead</strong>
+        <p>Role-aware controls show high-risk actions as gated. Sample data only; no production Flint records.</p>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="title-block">
+          <h1 id="screen-title">Overview</h1>
+          <p id="screen-subtitle">Sample operational view for Flint content discovery, collections, and search quality.</p>
+        </div>
+        <div class="top-actions">
+          <label class="field">
+            <span>Workspace search</span>
+            <input type="search" value="sample: flagged content" aria-label="Workspace search" />
+          </label>
+          <button class="button">Export CSV</button>
+          <button class="button primary">Create review</button>
+        </div>
+      </header>
+
+      <div class="sample-banner">
+        <span><strong>Sample data.</strong> Metrics, user labels, contents, and queue records are plausible placeholders for prototype review.</span>
+        <span class="mono">Updated 2026-05-16 09:30 KST</span>
+      </div>
+
+      <section class="screen active" id="screen-overview" aria-labelledby="screen-title">
+        <form class="toolbar" aria-label="Overview filters">
+          <label class="field"><span>Search</span><input type="search" value="moderation OR stale collection" /></label>
+          <label class="field"><span>Status</span><select><option>All states</option><option>Needs review</option><option>Healthy</option></select></label>
+          <label class="field"><span>Owner</span><select><option>All ops teams</option><option>Trust &amp; safety</option><option>Search relevance</option></select></label>
+          <label class="field"><span>Region</span><select><option>Global sample</option><option>North America</option><option>Europe</option></select></label>
+          <label class="field"><span>Window</span><select><option>Last 24 hours</option><option>7 days</option><option>30 days</option></select></label>
+          <button class="button primary" type="button">Apply</button>
+        </form>
+
+        <div class="grid-4">
+          <div class="metric"><div class="label">Active users sample</div><div class="value">128.4K</div><div class="delta good">+3.2% vs prior 7d</div></div>
+          <div class="metric"><div class="label">Content items indexed</div><div class="value">4.82M</div><div class="delta">96.8% searchable</div></div>
+          <div class="metric"><div class="label">Open moderation cases</div><div class="value">247</div><div class="delta warn">42 past SLA target</div></div>
+          <div class="metric"><div class="label">Search zero-result rate</div><div class="value">3.7%</div><div class="delta good">-0.4 pts today</div></div>
+        </div>
+
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-header">
+              <div><h2>Priority operations queue</h2><p>Rows open the audit detail drawer.</p></div>
+              <button class="button">Bulk assign</button>
+            </div>
+            <div class="panel-body">
+              <table>
+                <caption>Sample queue records across content, users, collections, and search quality.</caption>
+                <thead><tr><th scope="col">Work item</th><th scope="col">Type</th><th scope="col">Risk</th><th scope="col">Owner</th><th scope="col">Age</th></tr></thead>
+                <tbody>
+                  <tr data-detail="Content item CQ-1842|Possible scraped text cluster|Needs review|Trust &amp; safety|Evidence: 17 near-duplicate snippets across 5 sample collections.">
+                    <th scope="row"><div class="row-title"><strong>CQ-1842</strong><span>Possible scraped text cluster</span></div></th><td>Content</td><td><span class="badge orange">Medium</span></td><td>Trust &amp; safety</td><td class="mono">3h 12m</td>
+                  </tr>
+                  <tr data-detail="User U-20931|Sample user triggered abnormal bookmark burst|Monitor|User operations|Evidence: 214 bookmarks in 18 minutes, mostly same source domain.">
+                    <th scope="row"><div class="row-title"><strong>U-20931</strong><span>Abnormal bookmark burst</span></div></th><td>User</td><td><span class="badge blue">Monitor</span></td><td>User ops</td><td class="mono">1h 46m</td>
+                  </tr>
+                  <tr data-detail="Search SQ-071|Query drift on creative coding searches|Needs tuning|Search relevance|Evidence: zero-result rate above threshold for 6 related sample queries.">
+                    <th scope="row"><div class="row-title"><strong>SQ-071</strong><span>Query drift on creative coding</span></div></th><td>Search</td><td><span class="badge orange">Medium</span></td><td>Relevance</td><td class="mono">5h 20m</td>
+                  </tr>
+                  <tr data-detail="Collection CL-882|Public collection needs policy review|Escalated|Trust &amp; safety|Evidence: three items flagged by classifier and one sample user report.">
+                    <th scope="row"><div class="row-title"><strong>CL-882</strong><span>Public collection policy review</span></div></th><td>Collection</td><td><span class="badge red">High</span></td><td>Trust &amp; safety</td><td class="mono">7h 04m</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div><h2>Search quality snapshot</h2><p>Sample relevance diagnostics.</p></div>
+              <span class="badge blue">Live sample</span>
+            </div>
+            <div class="panel-body">
+              <div class="bar-chart">
+                <div class="bar-row"><span>Exact match</span><div class="bar-track"><div class="bar-fill" style="width: 88%"></div></div><strong class="mono">88%</strong></div>
+                <div class="bar-row"><span>Semantic match</span><div class="bar-track"><div class="bar-fill" style="width: 74%"></div></div><strong class="mono">74%</strong></div>
+                <div class="bar-row"><span>Collection boost</span><div class="bar-track"><div class="bar-fill" style="width: 63%"></div></div><strong class="mono">63%</strong></div>
+                <div class="bar-row"><span>Taste fit</span><div class="bar-track"><div class="bar-fill" style="width: 69%"></div></div><strong class="mono">69%</strong></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid-3">
+          <article class="content-card">
+            <div class="eyebrow">Product screenshot mock</div>
+            <div class="screenshot" aria-label="Sample content card screenshot">
+              <div class="shot-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <div class="shot-body"><div class="shot-thumb"></div><div class="shot-lines"><span class="line"></span><span class="line mid"></span><span class="line short"></span></div></div>
+            </div>
+            <h3>Content card audit preview</h3>
+            <div class="card-meta"><span>Sample item ID CT-4409</span><span>Classifier: needs review</span></div>
+          </article>
+          <article class="content-card">
+            <div class="eyebrow">Taste profile health</div>
+            <h3>12.8K sample profiles have stale topic weights</h3>
+            <p class="muted">Rebuild candidates are queued when bookmark signals diverge from recent collection saves.</p>
+            <div class="split-actions"><button class="button">Preview cohort</button><button class="button">Queue rebuild</button></div>
+          </article>
+          <article class="content-card">
+            <div class="eyebrow">Bookmark integrity</div>
+            <h3>Duplicate bookmark detector flagged 1.9K records</h3>
+            <p class="muted">Sample records cluster around imported browser folders and repeated share-sheet saves.</p>
+            <div class="split-actions"><button class="button">Review rules</button><button class="button">Merge candidates</button></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-users">
+        <form class="toolbar compact" aria-label="User filters">
+          <label class="field"><span>User search</span><input type="search" value="sample user, domain, role" /></label>
+          <label class="field"><span>Account state</span><select><option>All accounts</option><option>Active</option><option>Restricted</option><option>Admin</option></select></label>
+          <label class="field"><span>Taste status</span><select><option>Any taste profile</option><option>Fresh</option><option>Stale</option><option>Needs rebuild</option></select></label>
+          <label class="field"><span>Risk</span><select><option>Any risk</option><option>Elevated</option><option>Monitor</option></select></label>
+          <button class="button primary" type="button">Apply</button>
+        </form>
+        <div class="grid-3">
+          <div class="metric"><div class="label">New sample users</div><div class="value">2,418</div><div class="delta">Past 7 days</div></div>
+          <div class="metric"><div class="label">Taste profiles stale</div><div class="value">12.8K</div><div class="delta warn">Needs rebuild queue</div></div>
+          <div class="metric"><div class="label">Restricted accounts</div><div class="value">314</div><div class="delta">0.24% of sample base</div></div>
+        </div>
+        <section class="panel">
+          <div class="panel-header">
+            <div><h2>User management</h2><p>Role-aware controls for account, bookmarks, and taste profile operations.</p></div>
+            <div class="split-actions"><button class="button">Bulk message</button><button class="button danger">Restrict selected</button></div>
+          </div>
+          <div class="panel-body">
+            <table>
+              <caption>Sample users. Names are intentionally generic placeholders.</caption>
+              <thead><tr><th scope="col">User</th><th scope="col">State</th><th scope="col">Bookmarks</th><th scope="col">Collections</th><th scope="col">Taste profile</th><th scope="col">Last action</th></tr></thead>
+              <tbody>
+                <tr data-detail="Sample user U-1048|Power curator with elevated import volume|Active|User operations|Bookmarks 2,184; collections 73; taste profile fresh. Last admin note: import spike explained by browser migration.">
+                  <th scope="row"><div class="row-title"><strong>Sample user U-1048</strong><span>Power curator</span></div></th><td><span class="badge green">Active</span></td><td class="mono">2,184</td><td class="mono">73</td><td><span class="badge green">Fresh</span></td><td>Imported bookmarks</td>
+                </tr>
+                <tr data-detail="Sample user U-20931|Abnormal bookmark burst under monitor state|Monitor|User operations|Bookmarks 14,902; collections 28; taste profile noisy. Requires two-person approval for restriction.">
+                  <th scope="row"><div class="row-title"><strong>Sample user U-20931</strong><span>Abnormal bookmark burst</span></div></th><td><span class="badge orange">Monitor</span></td><td class="mono">14,902</td><td class="mono">28</td><td><span class="badge orange">Noisy</span></td><td>214 saves in 18m</td>
+                </tr>
+                <tr data-detail="Sample user U-7716|Creator account requesting collection recovery|Admin review|Support operations|Bookmarks 611; collections 19; taste profile stale after deleted-topic recovery.">
+                  <th scope="row"><div class="row-title"><strong>Sample user U-7716</strong><span>Recovery request</span></div></th><td><span class="badge blue">Review</span></td><td class="mono">611</td><td class="mono">19</td><td><span class="badge orange">Stale</span></td><td>Collection restore</td>
+                </tr>
+                <tr data-detail="Sample user U-3902|Restricted account with repeated policy warnings|Restricted|Trust &amp; safety|Bookmarks 389; collections 4; taste profile frozen during active review.">
+                  <th scope="row"><div class="row-title"><strong>Sample user U-3902</strong><span>Repeated policy warnings</span></div></th><td><span class="badge red">Restricted</span></td><td class="mono">389</td><td class="mono">4</td><td><span class="badge gray">Frozen</span></td><td>Appeal received</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="screen" id="screen-content">
+        <form class="toolbar compact" aria-label="Content filters">
+          <label class="field"><span>Content search</span><input type="search" value="sample item, URL, collection tag" /></label>
+          <label class="field"><span>Object</span><select><option>Content and collections</option><option>Content only</option><option>Collections only</option><option>Bookmarks only</option></select></label>
+          <label class="field"><span>Index state</span><select><option>Any index state</option><option>Indexed</option><option>Partial</option><option>Failed</option></select></label>
+          <label class="field"><span>Policy</span><select><option>Any policy state</option><option>Clean</option><option>Needs review</option><option>Removed</option></select></label>
+          <button class="button primary" type="button">Apply</button>
+        </form>
+        <div class="grid-3">
+          <article class="content-card" data-detail="Content CT-4409|Sample article card under policy review|Needs review|Content operations|Preview includes canonical URL, extracted topics, bookmark count, and related collections.">
+            <div class="eyebrow">Content card</div>
+            <div class="screenshot"><div class="shot-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="shot-body"><div class="shot-thumb"></div><div class="shot-lines"><span class="line mid"></span><span class="line"></span><span class="line short"></span></div></div></div>
+            <h3>Sample article: Browser-native collection workflows</h3>
+            <div class="card-meta"><span>CT-4409</span><span>8.4K bookmarks</span><span><span class="badge orange">Review</span></span></div>
+          </article>
+          <article class="content-card" data-detail="Collection CL-882|Public collection with mixed policy signals|Escalated|Trust &amp; safety|Contains 48 sample items, 3 classifier flags, and one sample report.">
+            <div class="eyebrow">Collection</div>
+            <div class="screenshot"><div class="shot-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="shot-body"><div class="shot-thumb"></div><div class="shot-lines"><span class="line"></span><span class="line mid"></span><span class="line"></span></div></div></div>
+            <h3>Sample collection: Interface research queue</h3>
+            <div class="card-meta"><span>CL-882</span><span>48 items</span><span><span class="badge red">Escalated</span></span></div>
+          </article>
+          <article class="content-card" data-detail="Bookmark BM-11804|Duplicate bookmark merge candidate|Ready|Content operations|Same canonical target appears in three imported folders.">
+            <div class="eyebrow">Bookmark</div>
+            <div class="screenshot"><div class="shot-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="shot-body"><div class="shot-thumb"></div><div class="shot-lines"><span class="line short"></span><span class="line"></span><span class="line mid"></span></div></div></div>
+            <h3>Sample bookmark: Duplicated source candidate</h3>
+            <div class="card-meta"><span>BM-11804</span><span>3 duplicates</span><span><span class="badge green">Ready</span></span></div>
+          </article>
+        </div>
+        <section class="panel">
+          <div class="panel-header">
+            <div><h2>Content and collection operations</h2><p>Audit-friendly inventory view with bulk actions and source-state fields.</p></div>
+            <div class="split-actions"><button class="button">Re-index selected</button><button class="button">Assign reviewer</button></div>
+          </div>
+          <div class="panel-body">
+            <table>
+              <caption>Sample content inventory.</caption>
+              <thead><tr><th scope="col">Object</th><th scope="col">Source state</th><th scope="col">Bookmarks</th><th scope="col">Collections</th><th scope="col">Index</th><th scope="col">Action</th></tr></thead>
+              <tbody>
+                <tr data-detail="Content CT-4409|Canonical article has extraction warnings|Needs review|Content operations|HTML extraction succeeded; image preview missing alt text; related query click-through above baseline.">
+                  <th scope="row"><div class="row-title"><strong>CT-4409</strong><span>Sample article card</span></div></th><td><span class="badge orange">Extraction warning</span></td><td class="mono">8,402</td><td class="mono">328</td><td><span class="badge blue">Partial</span></td><td>Review extract</td>
+                </tr>
+                <tr data-detail="Collection CL-118|Private collection export request|Ready|Support operations|Owner requested export; contains private notes and saved bookmark metadata.">
+                  <th scope="row"><div class="row-title"><strong>CL-118</strong><span>Private export request</span></div></th><td><span class="badge green">Clean</span></td><td class="mono">922</td><td class="mono">1</td><td><span class="badge green">Indexed</span></td><td>Generate export</td>
+                </tr>
+                <tr data-detail="Content CT-8112|URL canonicalization conflict|Needs tuning|Search relevance|Same page appears under four source URLs; merge candidate requires reviewer signoff.">
+                  <th scope="row"><div class="row-title"><strong>CT-8112</strong><span>Canonical conflict</span></div></th><td><span class="badge blue">Merge candidate</span></td><td class="mono">1,904</td><td class="mono">72</td><td><span class="badge orange">Partial</span></td><td>Resolve URL</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="screen" id="screen-moderation">
+        <form class="toolbar compact" aria-label="Moderation filters">
+          <label class="field"><span>Case search</span><input type="search" value="case, reporter, classifier, policy" /></label>
+          <label class="field"><span>Queue</span><select><option>All moderation queues</option><option>Content policy</option><option>User conduct</option><option>Spam and scraping</option></select></label>
+          <label class="field"><span>SLA</span><select><option>Any SLA</option><option>Past target</option><option>Due today</option><option>Healthy</option></select></label>
+          <label class="field"><span>Decision</span><select><option>Undecided</option><option>Remove</option><option>Restore</option><option>Escalate</option></select></label>
+          <button class="button primary" type="button">Apply</button>
+        </form>
+        <section class="panel">
+          <div class="panel-header">
+            <div><h2>Moderation queue</h2><p>Case-first triage with evidence, SLA, and reversible decision logging.</p></div>
+            <div class="split-actions"><button class="button">Assign 5 oldest</button><button class="button danger">Escalate high risk</button></div>
+          </div>
+          <div class="panel-body">
+            <table>
+              <caption>Sample moderation cases.</caption>
+              <thead><tr><th scope="col">Case</th><th scope="col">Evidence</th><th scope="col">Policy</th><th scope="col">SLA</th><th scope="col">Decision</th></tr></thead>
+              <tbody>
+                <tr data-detail="Case M-5004|Collection CL-882 policy escalation|Escalated|Trust &amp; safety|Evidence bundle includes classifier hits, sample user report, collection timeline, and prior admin actions.">
+                  <th scope="row"><div class="row-title"><strong>M-5004</strong><span>Collection policy escalation</span></div></th><td>3 classifier hits, 1 report</td><td><span class="badge red">High risk</span></td><td class="mono">Past 2h</td><td>Needs senior reviewer</td>
+                </tr>
+                <tr data-detail="Case M-5007|Potential automated bookmarking|Monitor|Trust &amp; safety|Evidence shows burst behavior but no policy removal yet. Hold account-level actions pending second signal.">
+                  <th scope="row"><div class="row-title"><strong>M-5007</strong><span>Automated bookmarking signal</span></div></th><td>Velocity anomaly</td><td><span class="badge orange">Medium</span></td><td class="mono">4h left</td><td>Monitor</td>
+                </tr>
+                <tr data-detail="Case M-5011|Removed content appeal|Appeal open|Support operations|Prior removal reason and creator statement are visible in audit timeline.">
+                  <th scope="row"><div class="row-title"><strong>M-5011</strong><span>Removed content appeal</span></div></th><td>Appeal text, original extract</td><td><span class="badge blue">Appeal</span></td><td class="mono">1d left</td><td>Compare sources</td>
+                </tr>
+                <tr data-detail="Case M-5014|Duplicate report cluster|Ready|Trust &amp; safety|Four sample reports are likely duplicate signals for the same bookmark import issue.">
+                  <th scope="row"><div class="row-title"><strong>M-5014</strong><span>Duplicate report cluster</span></div></th><td>4 reports, same URL</td><td><span class="badge gray">Low</span></td><td class="mono">2d left</td><td>Merge reports</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-header"><div><h2>Evidence preview</h2><p>Neutral product-detail screenshot mock.</p></div></div>
+            <div class="panel-body">
+              <div class="screenshot"><div class="shot-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="shot-body"><div class="shot-thumb"></div><div class="shot-lines"><span class="line"></span><span class="line mid"></span><span class="line short"></span><span class="line"></span></div></div></div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><div><h2>Decision checklist</h2><p>Designed for reversible, audit-ready actions.</p></div></div>
+            <div class="panel-body queue-list">
+              <div class="queue-item"><div><strong>Confirm policy category</strong><span>Require one primary category before action buttons unlock.</span></div><span class="badge green">Done</span></div>
+              <div class="queue-item"><div><strong>Compare prior actions</strong><span>Show previous restrictions, appeals, restores, and reviewer notes.</span></div><span class="badge blue">Open</span></div>
+              <div class="queue-item"><div><strong>Record operator rationale</strong><span>Decision note is required for removal, restriction, or search suppression.</span></div><span class="badge orange">Required</span></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-analytics">
+        <form class="toolbar compact" aria-label="Analytics filters">
+          <label class="field"><span>Report</span><input type="search" value="sample analytics and audit log" /></label>
+          <label class="field"><span>Window</span><select><option>Last 7 days</option><option>Last 24 hours</option><option>Last 30 days</option></select></label>
+          <label class="field"><span>Actor</span><select><option>All actors</option><option>Operator</option><option>System</option><option>Classifier</option></select></label>
+          <label class="field"><span>Risk</span><select><option>All risk levels</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+          <button class="button primary" type="button">Apply</button>
+        </form>
+        <div class="grid-4">
+          <div class="metric"><div class="label">Admin actions</div><div class="value">18.2K</div><div class="delta">Sample 7d total</div></div>
+          <div class="metric"><div class="label">Median review time</div><div class="value">11m</div><div class="delta good">-2m today</div></div>
+          <div class="metric"><div class="label">Appeal overturn rate</div><div class="value">4.6%</div><div class="delta">Within sample target</div></div>
+          <div class="metric"><div class="label">Search interventions</div><div class="value">392</div><div class="delta warn">64 require follow-up</div></div>
+        </div>
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-header"><div><h2>Operational analytics</h2><p>Sample volume by workflow.</p></div></div>
+            <div class="panel-body">
+              <div class="bar-chart">
+                <div class="bar-row"><span>Content review</span><div class="bar-track"><div class="bar-fill" style="width: 92%"></div></div><strong class="mono">7,820</strong></div>
+                <div class="bar-row"><span>User ops</span><div class="bar-track"><div class="bar-fill" style="width: 66%"></div></div><strong class="mono">3,104</strong></div>
+                <div class="bar-row"><span>Collections</span><div class="bar-track"><div class="bar-fill" style="width: 71%"></div></div><strong class="mono">4,229</strong></div>
+                <div class="bar-row"><span>Search quality</span><div class="bar-track"><div class="bar-fill" style="width: 45%"></div></div><strong class="mono">1,384</strong></div>
+                <div class="bar-row"><span>Audit exports</span><div class="bar-track"><div class="bar-fill" style="width: 28%"></div></div><strong class="mono">512</strong></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><div><h2>Audit log</h2><p>High-signal entries with actor, scope, and reason.</p></div><button class="button">Open full log</button></div>
+            <div class="panel-body">
+              <div class="audit-stream">
+                <div class="audit-row" data-detail="Audit A-99241|Operator assigned collection case M-5004|Logged|Audit service|Actor sample-admin-02 assigned high-risk queue item with reason: policy specialist review."><span class="mono">09:22</span><span>sample-admin-02 assigned M-5004 to policy specialist</span><span><span class="badge red">High</span></span></div>
+                <div class="audit-row" data-detail="Audit A-99239|System rebuilt taste profile cohort|Logged|Profile service|System queued 12.8K stale taste profiles for rebuild after topic weight drift."><span class="mono">09:15</span><span>system queued stale taste-profile rebuild cohort</span><span><span class="badge blue">System</span></span></div>
+                <div class="audit-row" data-detail="Audit A-99217|Operator resolved canonical URL conflict|Logged|Content service|Operator merged CT-8112 canonical URLs after source comparison."><span class="mono">08:48</span><span>sample-admin-04 merged canonical conflict CT-8112</span><span><span class="badge green">Done</span></span></div>
+                <div class="audit-row" data-detail="Audit A-99198|Search quality rule adjusted|Logged|Search relevance|Relevance threshold adjusted for creative coding query cluster; follow-up review scheduled."><span class="mono">08:02</span><span>search rule adjusted for creative coding cluster</span><span><span class="badge orange">Review</span></span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <aside class="drawer" aria-label="Detail drawer">
+      <div class="drawer-header">
+        <span class="badge blue" id="drawer-status">Selected record</span>
+        <h2 id="drawer-title">Content item CQ-1842</h2>
+        <p id="drawer-summary">Possible scraped text cluster. Evidence: 17 near-duplicate snippets across 5 sample collections.</p>
+      </div>
+      <div class="drawer-body">
+        <section class="drawer-section">
+          <h3>Record details</h3>
+          <div class="key-values">
+            <div><span>Owner</span><strong id="drawer-owner">Trust &amp; safety</strong></div>
+            <div><span>State</span><strong id="drawer-state">Needs review</strong></div>
+            <div><span>Data type</span><strong id="drawer-type">Content</strong></div>
+            <div><span>Sample flag</span><strong>Prototype data</strong></div>
+          </div>
+        </section>
+        <section class="drawer-section">
+          <h3>Operator workflow</h3>
+          <div class="queue-list">
+            <div class="queue-item"><div><strong>Review evidence</strong><span>Open source extract, reports, search behavior, and related collections.</span></div><span class="badge blue">Open</span></div>
+            <div class="queue-item"><div><strong>Record rationale</strong><span>Required before restriction, suppression, removal, or restore.</span></div><span class="badge orange">Required</span></div>
+            <div class="queue-item"><div><strong>Notify affected user</strong><span>Role-gated action with editable reason template.</span></div><span class="badge gray">Locked</span></div>
+          </div>
+        </section>
+        <section class="drawer-section">
+          <h3>Audit trail</h3>
+          <div class="audit-stream">
+            <div class="audit-row"><span class="mono">09:18</span><span>Case opened from classifier signal</span><span>System</span></div>
+            <div class="audit-row"><span class="mono">09:24</span><span>Evidence bundle attached</span><span>System</span></div>
+            <div class="audit-row"><span class="mono">09:31</span><span>Viewed by current operator</span><span>Admin</span></div>
+          </div>
+        </section>
+      </div>
+      <div class="drawer-actions">
+        <button class="button primary">Assign to me</button>
+        <button class="button">Add note</button>
+        <button class="button danger">Escalate</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    class DetailRecord {
+      static fromAttribute(value) {
+        const [title, summary, state, owner, evidence] = value.split("|");
+        return { title, summary, state, owner, evidence };
+      }
+    }
+
+    class FlintAdminApp {
+      static create() {
+        return new FlintAdminApp(document);
+      }
+
+      constructor(root) {
+        this.root = root;
+        this.title = root.getElementById("screen-title");
+        this.subtitle = root.getElementById("screen-subtitle");
+        this.drawer = {
+          title: root.getElementById("drawer-title"),
+          summary: root.getElementById("drawer-summary"),
+          status: root.getElementById("drawer-status"),
+          owner: root.getElementById("drawer-owner"),
+          state: root.getElementById("drawer-state"),
+          type: root.getElementById("drawer-type")
+        };
+        this.screenCopy = {
+          overview: ["Overview", "Sample operational view for Flint content discovery, collections, and search quality."],
+          users: ["User Management", "Manage sample users, bookmarks, taste profiles, access states, and role-aware actions."],
+          content: ["Content & Collections", "Review sample content items, collections, bookmarks, extraction state, and canonicalization."],
+          moderation: ["Moderation Queue", "Triage sample cases with evidence, policy state, SLA, and reversible decision logging."],
+          analytics: ["Analytics & Audit Logs", "Inspect sample operational metrics, search interventions, and admin audit events."]
+        };
+      }
+
+      mount() {
+        this.root.querySelectorAll("[data-screen]").forEach((button) => {
+          button.addEventListener("click", () => this.showScreen(button.dataset.screen));
+        });
+        this.root.querySelectorAll("[data-detail]").forEach((row) => {
+          row.addEventListener("click", () => this.showRecord(DetailRecord.fromAttribute(row.dataset.detail)));
+        });
+      }
+
+      showScreen(id) {
+        this.root.querySelectorAll(".screen").forEach((screen) => {
+          screen.classList.toggle("active", screen.id === `screen-${id}`);
+        });
+        this.root.querySelectorAll("[data-screen]").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.screen === id));
+        });
+        const copy = this.screenCopy[id] || this.screenCopy.overview;
+        this.title.textContent = copy[0];
+        this.subtitle.textContent = copy[1];
+      }
+
+      showRecord(record) {
+        this.drawer.title.textContent = record.title;
+        this.drawer.summary.textContent = `${record.summary}. ${record.evidence}`;
+        this.drawer.status.textContent = record.state;
+        this.drawer.owner.textContent = record.owner;
+        this.drawer.state.textContent = record.state;
+        this.drawer.type.textContent = record.title.split(" ")[0];
+      }
+    }
+
+    FlintAdminApp.create().mount();
+  </script>
+</body>
+</html>

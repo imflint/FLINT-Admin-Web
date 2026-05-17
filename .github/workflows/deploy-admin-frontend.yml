@@ -1,0 +1,94 @@
+name: Deploy Admin Frontend
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-admin-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ap-northeast-2
+  NODE_VERSION: "22"
+  PNPM_VERSION: "10.32.1"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_FRONTEND_ROLE_ARN: ${{ vars.AWS_FRONTEND_ROLE_ARN }}
+      ADMIN_FRONTEND_BUCKET: ${{ vars.ADMIN_FRONTEND_BUCKET }}
+      ADMIN_FRONTEND_DISTRIBUTION_ID: ${{ vars.ADMIN_FRONTEND_DISTRIBUTION_ID }}
+      ADMIN_API_BASE_URL: ${{ vars.ADMIN_API_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment variables
+        run: |
+          test -n "${AWS_FRONTEND_ROLE_ARN}" || { echo "AWS_FRONTEND_ROLE_ARN repository variable is required"; exit 1; }
+          test -n "${ADMIN_FRONTEND_BUCKET}" || { echo "ADMIN_FRONTEND_BUCKET repository variable is required"; exit 1; }
+          test -n "${ADMIN_FRONTEND_DISTRIBUTION_ID}" || { echo "ADMIN_FRONTEND_DISTRIBUTION_ID repository variable is required"; exit 1; }
+          test -n "${ADMIN_API_BASE_URL}" || { echo "ADMIN_API_BASE_URL repository variable is required"; exit 1; }
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_ADMIN_API_BASE_URL: ${{ env.ADMIN_API_BASE_URL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_FRONTEND_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: flint-admin-frontend-${{ github.run_id }}
+
+      - name: Upload immutable assets
+        run: |
+          aws s3 sync dist/ "s3://${ADMIN_FRONTEND_BUCKET}/" \
+            --delete \
+            --exclude "index.html" \
+            --cache-control "public,max-age=31536000,immutable"
+
+      - name: Upload SPA shell
+        run: |
+          aws s3 cp dist/index.html "s3://${ADMIN_FRONTEND_BUCKET}/index.html" \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --content-type "text/html"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${ADMIN_FRONTEND_DISTRIBUTION_ID}" \
+            --paths "/*"

@@ -1,0 +1,173 @@
+:root {
+  color: #111827;
+  background: #f6f8fb;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 1180px;
+  background: #f6f8fb;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+.admin-layout {
+  min-height: 100vh;
+}
+
+.admin-sider {
+  min-height: 100vh;
+  border-right: 1px solid #e5e7eb;
+  background: #ffffff !important;
+}
+
+.admin-brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 72px;
+  padding: 18px 20px;
+  color: #111827;
+  text-decoration: none;
+}
+
+.admin-brand-mark {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #1677ff;
+  font-weight: 800;
+}
+
+.admin-brand strong,
+.admin-brand small {
+  display: block;
+  line-height: 1.2;
+}
+
+.admin-brand small {
+  margin-top: 3px;
+  color: #6b7280;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.admin-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+.page-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #6b7280;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.placeholder-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.drawer-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.full-width-control,
+.status-select {
+  width: 100%;
+}
+
+.status-select {
+  min-width: 140px;
+}
+
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: #f6f8fb;
+}
+
+.login-card {
+  width: min(420px, 100%);
+}
+
+.sample-note {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #4b5563;
+  background: #ffffff;
+}
