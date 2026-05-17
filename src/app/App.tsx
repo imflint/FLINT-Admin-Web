@@ -1,5 +1,4 @@
 import {
-  CloudSyncOutlined,
   DashboardOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
@@ -13,7 +12,6 @@ import type { MenuProps } from "antd";
 import type { ReactNode } from "react";
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router";
 
-import { BatchPage } from "../pages/BatchPage";
 import { CollectionsPage } from "../pages/CollectionsPage";
 import { ContentPage } from "../pages/ContentPage";
 import { LoginPage } from "../pages/LoginPage";
@@ -51,11 +49,6 @@ const navigationItems: MenuProps["items"] = [
     key: "/admin/terms",
     icon: <FileTextOutlined />,
     label: <Link to="/admin/terms">약관 관리</Link>
-  },
-  {
-    key: "/admin/batch",
-    icon: <CloudSyncOutlined />,
-    label: <Link to="/admin/batch">데이터 업데이트</Link>
   }
 ];
 
@@ -143,7 +136,6 @@ export function App() {
         <Route path="collections" element={<CollectionsPage />} />
         <Route path="moderation" element={<ModerationPage />} />
         <Route path="terms" element={<TermsPage />} />
-        <Route path="batch" element={<BatchPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin/overview" replace />} />
     </Routes>
