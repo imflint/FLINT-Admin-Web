@@ -38,6 +38,8 @@ interface CollectionContentFormValue {
 
 type VisibilityFilter = AdminCollectionVisibility | "ALL";
 type ModerationStatusFilter = CollectionModerationStatus | "ALL";
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 export function CollectionsPage() {
   const { message } = AntApp.useApp();
@@ -46,7 +48,8 @@ export function CollectionsPage() {
   const [keyword, setKeyword] = useState<string | undefined>();
   const [visibility, setVisibility] = useState<VisibilityFilter>("ALL");
   const [moderationStatus, setModerationStatus] = useState<ModerationStatusFilter>("ALL");
-  const [cursor, setCursor] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
   const [contentSearchKeyword, setContentSearchKeyword] = useState<string | undefined>();
   const [form] = Form.useForm<CollectionFormValues>();
@@ -54,8 +57,8 @@ export function CollectionsPage() {
     keyword,
     visibility: visibility === "ALL" ? undefined : visibility,
     moderationStatus: moderationStatus === "ALL" ? undefined : moderationStatus,
-    cursor,
-    size: 10
+    page,
+    size: pageSize
   };
   const collectionsQuery = useQuery({
     queryKey: adminQueryKeys.collections(listParams),
@@ -142,7 +145,7 @@ export function CollectionsPage() {
 
   const handleSearch = (value: string) => {
     setKeyword(normalizeOptionalText(value));
-    setCursor(undefined);
+    setPage(1);
   };
 
   const handleFinish = (values: CollectionFormValues) => {
@@ -182,7 +185,7 @@ export function CollectionsPage() {
               className="status-select"
               onChange={(value) => {
                 setVisibility(value);
-                setCursor(undefined);
+                setPage(1);
               }}
               options={[
                 { label: "전체", value: "ALL" },
@@ -196,7 +199,7 @@ export function CollectionsPage() {
               className="status-select"
               onChange={(value) => {
                 setModerationStatus(value);
-                setCursor(undefined);
+                setPage(1);
               }}
               options={[
                 { label: "전체", value: "ALL" },
@@ -217,20 +220,19 @@ export function CollectionsPage() {
           columns={columns}
           dataSource={collectionsQuery.data?.data ?? []}
           loading={collectionsQuery.isPending}
-          pagination={false}
+          pagination={{
+            current: page,
+            pageSize,
+            total: collectionsQuery.data?.meta.totalElements ?? 0,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
+            showTotal: (total, range) => `${range[0]}-${range[1]} / 전체 ${total}건`,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage);
+              setPageSize(nextPageSize);
+            }
+          }}
         />
-        <div className="table-actions">
-          <Typography.Text type="secondary">
-            목록 {collectionsQuery.data?.meta.returned ?? 0}건
-            {collectionsQuery.data?.meta.nextCursor ? " · 다음 목록이 있습니다" : ""}
-          </Typography.Text>
-          <Button
-            disabled={!collectionsQuery.data?.meta.nextCursor}
-            onClick={() => setCursor(collectionsQuery.data?.meta.nextCursor ?? undefined)}
-          >
-            다음 목록
-          </Button>
-        </div>
       </Card>
 
       <Drawer

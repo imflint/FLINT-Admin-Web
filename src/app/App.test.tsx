@@ -144,9 +144,12 @@ function mockAdminFetch() {
             }
           ],
           meta: {
-            type: "CURSOR",
+            type: "OFFSET",
             returned: 1,
-            nextCursor: null
+            page: 1,
+            size: 10,
+            totalElements: 1,
+            totalPages: 1
           }
         });
       }
@@ -169,9 +172,12 @@ function mockAdminFetch() {
             }
           ],
           meta: {
-            type: "CURSOR",
+            type: "OFFSET",
             returned: 1,
-            nextCursor: null
+            page: 1,
+            size: 10,
+            totalElements: 1,
+            totalPages: 1
           }
         });
       }

@@ -31,17 +31,21 @@ interface ResolutionFormValues {
   adminMemo?: string;
 }
 
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
 export function ModerationPage() {
   const { message } = AntApp.useApp();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "ALL">("PENDING");
-  const [cursor, setCursor] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [form] = Form.useForm<ResolutionFormValues>();
   const listParams = {
     status: statusFilter === "ALL" ? undefined : statusFilter,
-    cursor,
-    size: 10
+    page,
+    size: pageSize
   };
   const reportsQuery = useQuery({
     queryKey: adminQueryKeys.collectionReports(listParams),
@@ -137,7 +141,7 @@ export function ModerationPage() {
               className="status-select"
               onChange={(value) => {
                 setStatusFilter(value);
-                setCursor(undefined);
+                setPage(1);
               }}
               options={[
                 { label: "전체", value: "ALL" },
@@ -157,20 +161,19 @@ export function ModerationPage() {
           columns={columns}
           dataSource={reportsQuery.data?.data ?? []}
           loading={reportsQuery.isPending}
-          pagination={false}
+          pagination={{
+            current: page,
+            pageSize,
+            total: reportsQuery.data?.meta.totalElements ?? 0,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE_OPTIONS,
+            showTotal: (total, range) => `${range[0]}-${range[1]} / 전체 ${total}건`,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage);
+              setPageSize(nextPageSize);
+            }
+          }}
         />
-        <div className="table-actions">
-          <Typography.Text type="secondary">
-            목록 {reportsQuery.data?.meta.returned ?? 0}건
-            {reportsQuery.data?.meta.nextCursor ? " · 다음 목록이 있습니다" : ""}
-          </Typography.Text>
-          <Button
-            disabled={!reportsQuery.data?.meta.nextCursor}
-            onClick={() => setCursor(reportsQuery.data?.meta.nextCursor ?? undefined)}
-          >
-            다음 목록
-          </Button>
-        </div>
       </Card>
 
       <Drawer

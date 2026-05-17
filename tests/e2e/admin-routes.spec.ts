@@ -152,9 +152,12 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
       await fulfillSuccess(route, {
         data: [collectionSummary],
         meta: {
-          type: "CURSOR",
+          type: "OFFSET",
           returned: 1,
-          nextCursor: null
+          page: 1,
+          size: 10,
+          totalElements: 1,
+          totalPages: 1
         }
       });
       return;
@@ -177,9 +180,12 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
       await fulfillSuccess(route, {
         data: [reportSummary],
         meta: {
-          type: "CURSOR",
+          type: "OFFSET",
           returned: 1,
-          nextCursor: null
+          page: 1,
+          size: 10,
+          totalElements: 1,
+          totalPages: 1
         }
       });
       return;
