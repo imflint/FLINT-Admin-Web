@@ -33,7 +33,7 @@ const columns: ColumnsType<OperationRow> = [
 ];
 
 const rows: OperationRow[] = [
-  { id: "사용자 현황", description: "현재 이용 가능한 사용자 수를 확인합니다.", path: "/admin/users", state: "사용 가능" },
+  { id: "회원 현황", description: "현재 가입된 회원 수를 확인합니다.", path: "/admin/users", state: "사용 가능" },
   { id: "신고 검토", description: "접수된 컬렉션 신고를 확인하고 처리합니다.", path: "/admin/moderation", state: "사용 가능" },
   { id: "콘텐츠 관리", description: "콘텐츠를 검색하고 제목, 연도, 설명, 장르를 수정합니다.", path: "/admin/content", state: "사용 가능" },
   { id: "컬렉션 관리", description: "컬렉션을 검색하고 포함 콘텐츠를 수정합니다.", path: "/admin/collections", state: "사용 가능" },
@@ -64,7 +64,7 @@ export function OverviewPage() {
         <Card>
           <Statistic
             loading={userStatisticsQuery.isPending}
-            title="활성 사용자 수"
+            title="가입 회원 수"
             value={userStatisticsQuery.data?.activeUserCount ?? 0}
           />
         </Card>

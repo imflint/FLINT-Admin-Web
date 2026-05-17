@@ -17,7 +17,7 @@ test("logs in and renders overview route", async ({ page }) => {
   await page.getByRole("button", { name: "로그인" }).click();
 
   await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
-  await expect(page.getByText("활성 사용자 수")).toBeVisible();
+  await expect(page.getByText("가입 회원 수")).toBeVisible();
 });
 
 test("renders main admin routes", async ({ page }) => {

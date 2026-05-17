@@ -6,8 +6,8 @@ import type { AdminLoginRes } from "../api/adminTypes";
 
 export interface AdminSession {
   accessToken: string;
-  refreshToken: string;
-  adminId: number;
+  refreshToken?: string | null;
+  adminId?: number | null;
 }
 
 export const ADMIN_SESSION_STORAGE_KEY = "flint.admin.session";
@@ -23,8 +23,8 @@ setAdminUnauthorizedHandler(refreshAdminSession);
 export function saveAdminSession(loginResponse: AdminLoginRes) {
   currentSession = {
     accessToken: loginResponse.accessToken,
-    refreshToken: loginResponse.refreshToken,
-    adminId: loginResponse.adminId
+    refreshToken: loginResponse.refreshToken ?? null,
+    adminId: loginResponse.adminId ?? null
   };
 
   writeStoredSession(currentSession);
@@ -99,14 +99,12 @@ function readStoredSession(): AdminSession | null {
     const parsedSession = JSON.parse(rawSession) as Partial<AdminSession>;
 
     if (
-      typeof parsedSession.accessToken === "string" &&
-      typeof parsedSession.refreshToken === "string" &&
-      typeof parsedSession.adminId === "number"
+      typeof parsedSession.accessToken === "string"
     ) {
       return {
         accessToken: parsedSession.accessToken,
-        refreshToken: parsedSession.refreshToken,
-        adminId: parsedSession.adminId
+        refreshToken: typeof parsedSession.refreshToken === "string" ? parsedSession.refreshToken : null,
+        adminId: typeof parsedSession.adminId === "number" ? parsedSession.adminId : null
       };
     }
   } catch {

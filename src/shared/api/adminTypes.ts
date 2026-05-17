@@ -28,8 +28,8 @@ export interface AdminRefreshTokenReq {
 
 export interface AdminLoginRes {
   accessToken: string;
-  refreshToken: string;
-  adminId: number;
+  refreshToken?: string | null;
+  adminId?: number | null;
 }
 
 export interface AdminUserStatisticsRes {

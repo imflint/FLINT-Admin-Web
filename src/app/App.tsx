@@ -5,7 +5,6 @@ import {
   FolderOpenOutlined,
   LogoutOutlined,
   SafetyOutlined,
-  TeamOutlined,
   VideoCameraOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -32,11 +31,6 @@ const navigationItems: MenuProps["items"] = [
     key: "/admin/overview",
     icon: <DashboardOutlined />,
     label: <Link to="/admin/overview">대시보드</Link>
-  },
-  {
-    key: "/admin/users",
-    icon: <TeamOutlined />,
-    label: <Link to="/admin/users">사용자</Link>
   },
   {
     key: "/admin/content",
@@ -102,7 +96,7 @@ function AdminLayout() {
           <Typography.Text type="secondary">Flint 운영 관리</Typography.Text>
           <div className="admin-header-actions">
             <Typography.Text type="secondary">
-              활성 사용자 {userStatisticsQuery.data?.activeUserCount ?? "-"}명
+              가입 회원 {userStatisticsQuery.data?.activeUserCount ?? "-"}명
             </Typography.Text>
             <Typography.Text type="secondary">관리자 계정</Typography.Text>
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>
