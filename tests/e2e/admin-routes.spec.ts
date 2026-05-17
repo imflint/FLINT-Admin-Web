@@ -35,8 +35,6 @@ test("renders main admin routes", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "컬렉션" })).toBeVisible();
   await page.goto("/admin/terms");
   await expect(page.getByRole("heading", { name: "약관 관리" })).toBeVisible();
-  await page.goto("/admin/batch");
-  await expect(page.getByRole("heading", { name: "데이터 업데이트" })).toBeVisible();
 });
 
 test("opens moderation detail and resolves a report", async ({ page }) => {
@@ -60,7 +58,7 @@ test("opens moderation detail and resolves a report", async ({ page }) => {
   await expect.poll(() => resolutionRequested).toBe(true);
 });
 
-test("submits content, terms, and batch mutations", async ({ page }) => {
+test("submits content and terms mutations", async ({ page }) => {
   await mockAdminApi(page);
   await seedAdminSession(page);
 
@@ -87,10 +85,6 @@ test("submits content, terms, and batch mutations", async ({ page }) => {
   await page.getByLabel("적용 시작 시각").press("Enter");
   await page.getByRole("button", { name: "약관 생성" }).click();
   await expect(page.getByText("약관 번호")).toBeVisible();
-
-  await page.goto("/admin/batch");
-  await page.getByRole("button", { name: "업데이트 시작" }).click();
-  await expect(page.getByRole("cell", { name: "영화 정보 가져오기" })).toBeVisible();
 });
 
 async function seedAdminSession(page: Page) {
@@ -228,20 +222,6 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
         content: "본문",
         required: true,
         activeAt: "2026-05-01T00:00:00"
-      });
-      return;
-    }
-
-    if (method === "POST" && pathname.includes("/admin/batch/")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          jobName: "tmdbMovieImportJob",
-          executionId: 1,
-          status: "STARTED",
-          createTime: "2026-05-17T10:00:00"
-        })
       });
       return;
     }

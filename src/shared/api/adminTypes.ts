@@ -207,20 +207,3 @@ export interface TermsRes {
   required: boolean;
   activeAt: string;
 }
-
-export type BatchType = "movies" | "tv" | "ott" | "delta";
-
-export interface BatchTriggerReq {
-  type: BatchType;
-  date?: string;
-  mediaType?: MediaType;
-  startDate?: string;
-  endDate?: string;
-}
-
-export interface BatchJobExecutionRes {
-  jobName: string;
-  executionId: number;
-  status: string;
-  createTime: string;
-}

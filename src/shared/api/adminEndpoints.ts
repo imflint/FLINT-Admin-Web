@@ -13,8 +13,6 @@ import type {
   AdminLoginRes,
   AdminRefreshTokenReq,
   AdminUserStatisticsRes,
-  BatchJobExecutionRes,
-  BatchTriggerReq,
   CollectionModerationStatus,
   MediaType,
   PaginationResponse,
@@ -121,35 +119,6 @@ export function createTerms(request: TermsCreateReq) {
   return adminApi<TermsRes>("/admin/terms", {
     method: "POST",
     body: request
-  });
-}
-
-export function triggerBatch(request: BatchTriggerReq) {
-  const mediaType = request.mediaType ?? "MOVIE";
-
-  if (request.type === "movies") {
-    return postBatch("/admin/batch/movies", { date: request.date });
-  }
-
-  if (request.type === "tv") {
-    return postBatch("/admin/batch/tv", { date: request.date });
-  }
-
-  if (request.type === "ott") {
-    return postBatch("/admin/batch/ott", { mediaType });
-  }
-
-  return postBatch("/admin/batch/delta", {
-    mediaType,
-    startDate: request.startDate,
-    endDate: request.endDate
-  });
-}
-
-function postBatch(path: string, params: object) {
-  return adminApi<BatchJobExecutionRes>(withQuery(path, params), {
-    method: "POST",
-    rawResponse: true
   });
 }
 
