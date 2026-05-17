@@ -11,9 +11,13 @@ export type TermsContext = "SIGNUP" | "WITHDRAWAL";
 export interface PaginationResponse<T> {
   data: T[];
   meta: {
-    type: "CURSOR";
+    type: "CURSOR" | "OFFSET";
     returned: number;
     nextCursor?: string | null;
+    page?: number;
+    size?: number;
+    totalElements?: number;
+    totalPages?: number;
   };
 }
 

@@ -43,13 +43,13 @@ export interface AdminCollectionListParams {
   keyword?: string;
   visibility?: AdminCollectionVisibility;
   moderationStatus?: CollectionModerationStatus;
-  cursor?: string | number | null;
+  page?: number;
   size?: number;
 }
 
 export interface CollectionReportsParams {
   status?: ReportStatus;
-  cursor?: string | number | null;
+  page?: number;
   size?: number;
 }
 
