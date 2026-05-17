@@ -6,14 +6,12 @@ export function AnalyticsPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>운영 지표</Typography.Title>
-          <Typography.Paragraph>
-            운영 지표와 감사 로그는 아직 전용 Admin API가 없어 후속 단계에서 연동합니다.
-          </Typography.Paragraph>
+          <Typography.Paragraph>운영 지표와 처리 이력 화면은 준비 중입니다.</Typography.Paragraph>
         </div>
       </header>
 
       <Card>
-        <Empty description="감사 로그와 운영 지표 API는 후속 단계에서 연결합니다." />
+        <Empty description="운영 지표와 처리 이력은 후속 단계에서 제공됩니다." />
       </Card>
     </div>
   );

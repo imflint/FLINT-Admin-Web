@@ -1,11 +1,12 @@
-import { useMutation } from "@tanstack/react-query";
-import { App as AntApp, Button, Card, Checkbox, Descriptions, Form, Input, InputNumber, Typography } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { App as AntApp, Alert, Button, Card, Checkbox, Descriptions, Drawer, Form, Input, InputNumber, Select, Space, Table, Tag, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useEffect, useState } from "react";
 
-import { updateContent } from "../shared/api/adminEndpoints";
-import type { AdminContentUpdateReq } from "../shared/api/adminTypes";
+import { adminQueryKeys, getAdminContents, updateContent } from "../shared/api/adminEndpoints";
+import type { AdminContentRes, AdminContentUpdateReq, MediaType } from "../shared/api/adminTypes";
 
 interface ContentFormValues {
-  contentId: number;
   title?: string;
   year?: number;
   author?: string;
@@ -15,27 +16,96 @@ interface ContentFormValues {
   removeGenres?: boolean;
 }
 
+type MediaTypeFilter = MediaType | "ALL";
+
 export function ContentPage() {
   const { message } = AntApp.useApp();
+  const queryClient = useQueryClient();
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState<string | undefined>();
+  const [mediaType, setMediaType] = useState<MediaTypeFilter>("ALL");
+  const [cursor, setCursor] = useState<string | undefined>();
+  const [selectedContent, setSelectedContent] = useState<AdminContentRes | null>(null);
   const [form] = Form.useForm<ContentFormValues>();
+  const listParams = {
+    keyword,
+    mediaType: mediaType === "ALL" ? undefined : mediaType,
+    cursor,
+    size: 10
+  };
+  const contentsQuery = useQuery({
+    queryKey: adminQueryKeys.contents(listParams),
+    queryFn: () => getAdminContents(listParams)
+  });
   const contentMutation = useMutation({
     mutationFn: ({ contentId, payload }: { contentId: number; payload: AdminContentUpdateReq }) =>
       updateContent(contentId, payload),
-    onSuccess: () => {
+    onSuccess: async (content) => {
+      setSelectedContent(content);
       void message.success("콘텐츠 정보를 수정했습니다.");
+      await queryClient.invalidateQueries({ queryKey: ["admin", "contents"] });
     }
   });
 
-  const handleFinish = (values: ContentFormValues) => {
-    const payload = buildContentUpdatePayload(values);
+  useEffect(() => {
+    if (!selectedContent) {
+      return;
+    }
 
+    form.setFieldsValue({
+      title: selectedContent.title,
+      year: selectedContent.year,
+      author: selectedContent.author,
+      description: selectedContent.description,
+      poster: selectedContent.posterUrl ?? undefined,
+      genreNamesText: selectedContent.genreNames.join(", "),
+      removeGenres: false
+    });
+  }, [form, selectedContent]);
+
+  const columns: ColumnsType<AdminContentRes> = [
+    { title: "콘텐츠 번호", dataIndex: "id", key: "id", width: 110 },
+    { title: "제목", dataIndex: "title", key: "title" },
+    {
+      title: "종류",
+      dataIndex: "mediaType",
+      key: "mediaType",
+      width: 90,
+      render: (value: MediaType) => <Tag>{formatMediaType(value)}</Tag>
+    },
+    { title: "연도", dataIndex: "year", key: "year", width: 90 },
+    { title: "감독/작가", dataIndex: "author", key: "author" },
+    { title: "저장 수", dataIndex: "bookmarkCount", key: "bookmarkCount", width: 90 },
+    {
+      title: "작업",
+      key: "action",
+      width: 100,
+      render: (_, content) => (
+        <Button type="link" onClick={() => setSelectedContent(content)}>
+          수정하기
+        </Button>
+      )
+    }
+  ];
+
+  const handleSearch = (value: string) => {
+    setKeyword(normalizeOptionalText(value));
+    setCursor(undefined);
+  };
+
+  const handleFinish = (values: ContentFormValues) => {
+    if (!selectedContent) {
+      return;
+    }
+
+    const payload = buildContentUpdatePayload(values);
     if (Object.keys(payload).length === 0) {
       void message.warning("수정할 값을 하나 이상 입력해주세요.");
       return;
     }
 
     contentMutation.mutate({
-      contentId: values.contentId,
+      contentId: selectedContent.id,
       payload
     });
   };
@@ -45,72 +115,106 @@ export function ContentPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>콘텐츠</Typography.Title>
-          <Typography.Paragraph>
-            콘텐츠 ID를 기준으로 단건 메타데이터 수정 API를 호출합니다.
-          </Typography.Paragraph>
+          <Typography.Paragraph>콘텐츠를 검색해 제목, 연도, 설명, 장르를 수정합니다.</Typography.Paragraph>
         </div>
       </header>
 
-      <div className="section-grid">
-        <Card title="콘텐츠 수정">
-          <Form<ContentFormValues>
-            form={form}
-            layout="vertical"
-            requiredMark={false}
-            initialValues={{ removeGenres: false }}
-            onFinish={handleFinish}
-          >
-            <Form.Item
-              label="콘텐츠 ID"
-              name="contentId"
-              rules={[{ required: true, message: "콘텐츠 ID를 입력해주세요." }]}
-            >
-              <InputNumber min={1} precision={0} className="full-width-control" />
-            </Form.Item>
-            <Form.Item label="제목" name="title">
-              <Input maxLength={255} />
-            </Form.Item>
-            <Form.Item label="연도" name="year">
-              <InputNumber min={0} precision={0} className="full-width-control" />
-            </Form.Item>
-            <Form.Item label="감독/작가" name="author">
-              <Input maxLength={255} />
-            </Form.Item>
-            <Form.Item label="설명" name="description">
-              <Input.TextArea rows={4} />
-            </Form.Item>
-            <Form.Item label="포스터 이미지 키 또는 URL" name="poster">
-              <Input />
-            </Form.Item>
-            <Form.Item label="장르명" name="genreNamesText" extra="쉼표로 구분합니다. 비워두면 기존 장르를 유지합니다.">
-              <Input placeholder="액션, SF" />
-            </Form.Item>
-            <Form.Item name="removeGenres" valuePropName="checked">
-              <Checkbox>장르를 모두 제거합니다.</Checkbox>
-            </Form.Item>
-            <Button type="primary" htmlType="submit" loading={contentMutation.isPending}>
-              콘텐츠 수정
+      <Card
+        title="콘텐츠 목록"
+        extra={
+          <Space>
+            <Input.Search
+              allowClear
+              placeholder="제목 검색"
+              value={keywordInput}
+              onChange={(event) => setKeywordInput(event.target.value)}
+              onSearch={handleSearch}
+            />
+            <Select<MediaTypeFilter>
+              aria-label="콘텐츠 종류"
+              value={mediaType}
+              className="status-select"
+              onChange={(value) => {
+                setMediaType(value);
+                setCursor(undefined);
+              }}
+              options={[
+                { label: "전체", value: "ALL" },
+                { label: "영화", value: "MOVIE" },
+                { label: "TV", value: "TV" }
+              ]}
+            />
+            <Button onClick={() => contentsQuery.refetch()} loading={contentsQuery.isFetching}>
+              새로고침
             </Button>
-          </Form>
-        </Card>
+          </Space>
+        }
+      >
+        {contentsQuery.isError ? <Alert type="error" showIcon message="콘텐츠 목록을 불러오지 못했습니다." /> : null}
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={contentsQuery.data?.data ?? []}
+          loading={contentsQuery.isPending}
+          pagination={false}
+        />
+        <div className="table-actions">
+          <Typography.Text type="secondary">
+            목록 {contentsQuery.data?.meta.returned ?? 0}건
+            {contentsQuery.data?.meta.nextCursor ? " · 다음 목록이 있습니다" : ""}
+          </Typography.Text>
+          <Button
+            disabled={!contentsQuery.data?.meta.nextCursor}
+            onClick={() => setCursor(contentsQuery.data?.meta.nextCursor ?? undefined)}
+          >
+            다음 목록
+          </Button>
+        </div>
+      </Card>
 
-        <Card title="수정 결과">
-          {contentMutation.data ? (
+      <Drawer
+        title="콘텐츠 정보 수정"
+        size="large"
+        open={selectedContent !== null}
+        onClose={() => setSelectedContent(null)}
+        destroyOnHidden
+      >
+        {selectedContent ? (
+          <div className="drawer-stack">
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="콘텐츠 ID">{contentMutation.data.id}</Descriptions.Item>
-              <Descriptions.Item label="TMDB ID">{contentMutation.data.tmdbId}</Descriptions.Item>
-              <Descriptions.Item label="미디어 타입">{contentMutation.data.mediaType}</Descriptions.Item>
-              <Descriptions.Item label="제목">{contentMutation.data.title}</Descriptions.Item>
-              <Descriptions.Item label="연도">{contentMutation.data.year}</Descriptions.Item>
-              <Descriptions.Item label="감독/작가">{contentMutation.data.author}</Descriptions.Item>
-              <Descriptions.Item label="북마크 수">{contentMutation.data.bookmarkCount}</Descriptions.Item>
-              <Descriptions.Item label="장르">{contentMutation.data.genreNames.join(", ") || "-"}</Descriptions.Item>
+              <Descriptions.Item label="콘텐츠 번호">{selectedContent.id}</Descriptions.Item>
+              <Descriptions.Item label="종류">{formatMediaType(selectedContent.mediaType)}</Descriptions.Item>
+              <Descriptions.Item label="저장 수">{selectedContent.bookmarkCount}</Descriptions.Item>
             </Descriptions>
-          ) : (
-            <Typography.Text type="secondary">수정 요청이 완료되면 응답 결과가 여기에 표시됩니다.</Typography.Text>
-          )}
-        </Card>
-      </div>
+            <Form<ContentFormValues> form={form} layout="vertical" requiredMark={false} onFinish={handleFinish}>
+              <Form.Item label="제목" name="title">
+                <Input maxLength={255} />
+              </Form.Item>
+              <Form.Item label="연도" name="year">
+                <InputNumber min={0} precision={0} className="full-width-control" />
+              </Form.Item>
+              <Form.Item label="감독/작가" name="author">
+                <Input maxLength={255} />
+              </Form.Item>
+              <Form.Item label="설명" name="description">
+                <Input.TextArea rows={4} />
+              </Form.Item>
+              <Form.Item label="포스터 이미지 주소" name="poster">
+                <Input />
+              </Form.Item>
+              <Form.Item label="장르" name="genreNamesText" extra="여러 장르는 쉼표로 구분합니다. 비워두면 기존 장르를 유지합니다.">
+                <Input placeholder="액션, SF" />
+              </Form.Item>
+              <Form.Item name="removeGenres" valuePropName="checked">
+                <Checkbox>장르를 모두 제거합니다.</Checkbox>
+              </Form.Item>
+              <Button type="primary" htmlType="submit" loading={contentMutation.isPending}>
+                수정하기
+              </Button>
+            </Form>
+          </div>
+        ) : null}
+      </Drawer>
     </div>
   );
 }
@@ -158,4 +262,16 @@ function buildContentUpdatePayload(values: ContentFormValues): AdminContentUpdat
 function normalizeOptionalText(value: string | undefined) {
   const normalized = value?.trim();
   return normalized || undefined;
+}
+
+function formatMediaType(value: string) {
+  if (value === "MOVIE") {
+    return "영화";
+  }
+
+  if (value === "TV") {
+    return "TV";
+  }
+
+  return value;
 }

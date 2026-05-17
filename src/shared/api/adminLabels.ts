@@ -1,5 +1,6 @@
 import type {
   CollectionModerationAction,
+  CollectionModerationStatus,
   ReportReason,
   ReportStatus,
   TermsContext,
@@ -24,6 +25,12 @@ export const collectionActionLabels: Record<CollectionModerationAction, string> 
   DELETE: "삭제",
   HIDE: "숨김",
   KEEP: "유지"
+};
+
+export const collectionStatusLabels: Record<CollectionModerationStatus, string> = {
+  VISIBLE: "정상",
+  HIDDEN: "숨김",
+  DELETED: "삭제됨"
 };
 
 export const userActionLabels: Record<UserModerationAction, string> = {

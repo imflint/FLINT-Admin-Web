@@ -1,5 +1,9 @@
 import { adminApi } from "./adminApi";
 import type {
+  AdminCollectionDetailRes,
+  AdminCollectionSummaryRes,
+  AdminCollectionUpdateReq,
+  AdminCollectionVisibility,
   AdminCollectionReportDetailRes,
   AdminCollectionReportResolutionReq,
   AdminCollectionReportSummaryRes,
@@ -11,6 +15,8 @@ import type {
   AdminUserStatisticsRes,
   BatchJobExecutionRes,
   BatchTriggerReq,
+  CollectionModerationStatus,
+  MediaType,
   PaginationResponse,
   ReportStatus,
   TermsCreateReq,
@@ -19,9 +25,27 @@ import type {
 
 export const adminQueryKeys = {
   userStatistics: ["admin", "users", "statistics"] as const,
+  contents: (params: AdminContentListParams) => ["admin", "contents", params] as const,
+  collections: (params: AdminCollectionListParams) => ["admin", "collections", params] as const,
+  collection: (collectionId: number) => ["admin", "collections", collectionId] as const,
   collectionReports: (params: CollectionReportsParams) => ["admin", "reports", "collections", params] as const,
   collectionReport: (reportId: number) => ["admin", "reports", "collections", reportId] as const
 };
+
+export interface AdminContentListParams {
+  keyword?: string;
+  mediaType?: MediaType;
+  cursor?: string | number | null;
+  size?: number;
+}
+
+export interface AdminCollectionListParams {
+  keyword?: string;
+  visibility?: AdminCollectionVisibility;
+  moderationStatus?: CollectionModerationStatus;
+  cursor?: string | number | null;
+  size?: number;
+}
 
 export interface CollectionReportsParams {
   status?: ReportStatus;
@@ -48,6 +72,25 @@ export function refreshAdminTokens(request: AdminRefreshTokenReq) {
 
 export function getAdminUserStatistics() {
   return adminApi<AdminUserStatisticsRes>("/admin/users/statistics");
+}
+
+export function getAdminContents(params: AdminContentListParams = {}) {
+  return adminApi<PaginationResponse<AdminContentRes>>(withQuery("/admin/contents", params));
+}
+
+export function getAdminCollections(params: AdminCollectionListParams = {}) {
+  return adminApi<PaginationResponse<AdminCollectionSummaryRes>>(withQuery("/admin/collections", params));
+}
+
+export function getAdminCollection(collectionId: number) {
+  return adminApi<AdminCollectionDetailRes>(`/admin/collections/${collectionId}`);
+}
+
+export function updateAdminCollection(collectionId: number, request: AdminCollectionUpdateReq) {
+  return adminApi<AdminCollectionDetailRes>(`/admin/collections/${collectionId}`, {
+    method: "PUT",
+    body: request
+  });
 }
 
 export function getCollectionReports(params: CollectionReportsParams = {}) {

@@ -143,6 +143,15 @@ textarea {
   margin-top: 16px;
 }
 
+.form-list-heading {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.form-list-heading h3 {
+  margin: 0;
+}
+
 .full-width-control,
 .status-select {
   width: 100%;

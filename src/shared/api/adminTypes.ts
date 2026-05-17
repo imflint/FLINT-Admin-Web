@@ -1,6 +1,8 @@
 export type ReportStatus = "PENDING" | "RESOLVED";
 export type ReportReason = "ABUSE" | "OBSCENE" | "SPAM" | "COPYRIGHT" | "OTHER";
 export type CollectionModerationAction = "DELETE" | "HIDE" | "KEEP";
+export type CollectionModerationStatus = "VISIBLE" | "HIDDEN" | "DELETED";
+export type AdminCollectionVisibility = "PUBLIC" | "PRIVATE";
 export type UserModerationAction = "WARN" | "RESTRICT_UPLOAD" | "SUSPEND" | "KEEP";
 export type MediaType = "MOVIE" | "TV";
 export type TermsType = "SERVICE" | "PRIVACY" | "MARKETING" | "WITHDRAWAL";
@@ -122,6 +124,63 @@ export interface AdminContentRes {
   posterUrl?: string | null;
   bookmarkCount: number;
   genreNames: string[];
+}
+
+export interface AdminCollectionSummaryRes {
+  collectionId: number;
+  title: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isPublic: boolean;
+  moderationStatus: CollectionModerationStatus;
+  bookmarkCount: number;
+  ownerId?: number | null;
+  ownerNickname?: string | null;
+  contentCount: number;
+  createdAt: string;
+}
+
+export interface AdminCollectionDetailRes {
+  collectionId: number;
+  title: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isPublic: boolean;
+  moderationStatus: CollectionModerationStatus;
+  bookmarkCount: number;
+  createdAt: string;
+  owner: {
+    userId?: number | null;
+    nickname?: string | null;
+    profileImageUrl?: string | null;
+  };
+  contents: AdminCollectionContentInfo[];
+}
+
+export interface AdminCollectionContentInfo {
+  contentId: number;
+  title: string;
+  posterUrl?: string | null;
+  customImageUrl?: string | null;
+  isSpoiler: boolean;
+  reason: string;
+  year: number;
+  mediaType: MediaType;
+}
+
+export interface AdminCollectionUpdateReq {
+  imageUrl?: string;
+  title: string;
+  description?: string;
+  isPublic: boolean;
+  contentList: AdminCollectionContentUpdateReq[];
+}
+
+export interface AdminCollectionContentUpdateReq {
+  contentId: number;
+  isSpoiler: boolean;
+  reason: string;
+  customImage?: string;
 }
 
 export interface TermsCreateReq {

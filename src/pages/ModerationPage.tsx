@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App as AntApp, Alert, Button, Card, Descriptions, Drawer, Form, Input, Select, Space, Table, Tag, Typography } from "antd";
+import { App as AntApp, Alert, Button, Card, DatePicker, Descriptions, Drawer, Form, Input, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 
 import {
@@ -25,7 +27,7 @@ import type {
 interface ResolutionFormValues {
   collectionAction: CollectionModerationAction;
   userAction: UserModerationAction;
-  userActionExpiresAt?: string;
+  userActionExpiresAt?: Dayjs;
   adminMemo?: string;
 }
 
@@ -55,7 +57,7 @@ export function ModerationPage() {
       resolveCollectionReport(selectedReportId!, {
         collectionAction: values.collectionAction,
         userAction: values.userAction,
-        userActionExpiresAt: normalizeNullableText(values.userActionExpiresAt),
+        userActionExpiresAt: normalizeOptionalDateTime(values.userActionExpiresAt),
         adminMemo: normalizeNullableText(values.adminMemo) ?? undefined
       }),
     onSuccess: async () => {
@@ -73,13 +75,13 @@ export function ModerationPage() {
     form.setFieldsValue({
       collectionAction: detailQuery.data.report.collectionAction ?? "KEEP",
       userAction: detailQuery.data.report.userAction ?? "KEEP",
-      userActionExpiresAt: detailQuery.data.report.userActionExpiresAt ?? undefined,
+      userActionExpiresAt: parseNullableDateTime(detailQuery.data.report.userActionExpiresAt),
       adminMemo: detailQuery.data.report.adminMemo ?? undefined
     });
   }, [detailQuery.data, form]);
 
   const columns: ColumnsType<AdminCollectionReportSummaryRes> = [
-    { title: "신고 ID", dataIndex: "reportId", key: "reportId", width: 90 },
+    { title: "신고 번호", dataIndex: "reportId", key: "reportId", width: 90 },
     { title: "컬렉션", dataIndex: "collectionTitle", key: "collectionTitle" },
     {
       title: "신고 사유",
@@ -108,7 +110,7 @@ export function ModerationPage() {
       key: "action",
       render: (_, report) => (
         <Button type="link" onClick={() => setSelectedReportId(report.reportId)}>
-          상세 보기
+          검토하기
         </Button>
       )
     }
@@ -121,9 +123,7 @@ export function ModerationPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>신고 관리</Typography.Title>
-          <Typography.Paragraph>
-            컬렉션 신고 목록, 상세, 처리 API를 실제 운영 데이터와 연결합니다.
-          </Typography.Paragraph>
+          <Typography.Paragraph>접수된 컬렉션 신고를 확인하고 필요한 조치를 기록합니다.</Typography.Paragraph>
         </div>
       </header>
 
@@ -161,8 +161,8 @@ export function ModerationPage() {
         />
         <div className="table-actions">
           <Typography.Text type="secondary">
-            반환 {reportsQuery.data?.meta.returned ?? 0}건
-            {reportsQuery.data?.meta.nextCursor ? ` · 다음 커서 ${reportsQuery.data.meta.nextCursor}` : ""}
+            목록 {reportsQuery.data?.meta.returned ?? 0}건
+            {reportsQuery.data?.meta.nextCursor ? " · 다음 목록이 있습니다" : ""}
           </Typography.Text>
           <Button
             disabled={!reportsQuery.data?.meta.nextCursor}
@@ -174,18 +174,18 @@ export function ModerationPage() {
       </Card>
 
       <Drawer
-        title="신고 상세"
-        width={720}
+        title="신고 검토"
+        size="large"
         open={selectedReportId !== null}
         onClose={() => setSelectedReportId(null)}
         destroyOnHidden
       >
-        {detailQuery.isPending ? <Typography.Text type="secondary">신고 상세를 불러오는 중입니다.</Typography.Text> : null}
-        {detailQuery.isError ? <Alert type="error" showIcon message="신고 상세를 불러오지 못했습니다." /> : null}
+        {detailQuery.isPending ? <Typography.Text type="secondary">신고 내용을 불러오는 중입니다.</Typography.Text> : null}
+        {detailQuery.isError ? <Alert type="error" showIcon message="신고 내용을 불러오지 못했습니다." /> : null}
         {selectedDetail ? (
           <div className="drawer-stack">
             <Descriptions title="신고 정보" column={1} bordered size="small">
-              <Descriptions.Item label="신고 ID">{selectedDetail.report.reportId}</Descriptions.Item>
+              <Descriptions.Item label="신고 번호">{selectedDetail.report.reportId}</Descriptions.Item>
               <Descriptions.Item label="상태">{reportStatusLabels[selectedDetail.report.reportStatus]}</Descriptions.Item>
               <Descriptions.Item label="신고 사유">{renderReasons(selectedDetail.report.reasons)}</Descriptions.Item>
               <Descriptions.Item label="기타 내용">{selectedDetail.report.otherDetail || "-"}</Descriptions.Item>
@@ -194,7 +194,7 @@ export function ModerationPage() {
             </Descriptions>
 
             <Descriptions title="컬렉션" column={1} bordered size="small">
-              <Descriptions.Item label="컬렉션 ID">{selectedDetail.collection.collectionId}</Descriptions.Item>
+              <Descriptions.Item label="컬렉션 번호">{selectedDetail.collection.collectionId}</Descriptions.Item>
               <Descriptions.Item label="제목">{selectedDetail.collection.title}</Descriptions.Item>
               <Descriptions.Item label="공개 여부">{isCollectionPublic ? "공개" : "비공개"}</Descriptions.Item>
               <Descriptions.Item label="상태">{selectedDetail.collection.moderationStatus}</Descriptions.Item>
@@ -217,7 +217,7 @@ export function ModerationPage() {
               pagination={false}
               dataSource={selectedDetail.contents}
               columns={[
-                { title: "콘텐츠 ID", dataIndex: "contentId", key: "contentId" },
+                { title: "콘텐츠 번호", dataIndex: "contentId", key: "contentId" },
                 { title: "제목", dataIndex: "title", key: "title" },
                 { title: "메모", dataIndex: "reason", key: "reason", render: (value: string | null) => value || "-" },
                 {
@@ -229,7 +229,7 @@ export function ModerationPage() {
               ]}
             />
 
-            <Card title="처리 요청 값" size="small">
+            <Card title="처리 내용" size="small">
               <Form<ResolutionFormValues> form={form} layout="vertical" requiredMark={false} onFinish={resolutionMutation.mutate}>
                 <Form.Item
                   label="컬렉션 조치"
@@ -237,7 +237,7 @@ export function ModerationPage() {
                   rules={[{ required: true, message: "컬렉션 조치를 선택해주세요." }]}
                 >
                   <Select
-                    options={Object.entries(collectionActionLabels).map(([value, label]) => ({ value, label: `${label} (${value})` }))}
+                    options={Object.entries(collectionActionLabels).map(([value, label]) => ({ value, label }))}
                   />
                 </Form.Item>
                 <Form.Item
@@ -246,17 +246,17 @@ export function ModerationPage() {
                   rules={[{ required: true, message: "사용자 조치를 선택해주세요." }]}
                 >
                   <Select
-                    options={Object.entries(userActionLabels).map(([value, label]) => ({ value, label: `${label} (${value})` }))}
+                    options={Object.entries(userActionLabels).map(([value, label]) => ({ value, label }))}
                   />
                 </Form.Item>
-                <Form.Item label="사용자 조치 만료 시각" name="userActionExpiresAt" extra="예: 2026-06-30T23:59:59">
-                  <Input />
+                <Form.Item label="조치 종료 시각" name="userActionExpiresAt">
+                  <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" className="full-width-control" />
                 </Form.Item>
                 <Form.Item label="관리자 메모" name="adminMemo" rules={[{ max: 500, message: "최대 500자까지 입력할 수 있습니다." }]}>
                   <Input.TextArea rows={4} />
                 </Form.Item>
                 <Button type="primary" htmlType="submit" loading={resolutionMutation.isPending}>
-                  신고 처리
+                  처리 완료
                 </Button>
               </Form>
             </Card>
@@ -292,4 +292,12 @@ function formatDateTime(value?: string | null) {
 function normalizeNullableText(value: string | undefined) {
   const normalized = value?.trim();
   return normalized || null;
+}
+
+function parseNullableDateTime(value?: string | null) {
+  return value ? dayjs(value) : undefined;
+}
+
+function normalizeOptionalDateTime(value: Dayjs | undefined) {
+  return value ? value.format("YYYY-MM-DDTHH:mm:ss") : null;
 }

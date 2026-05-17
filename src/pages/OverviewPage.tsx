@@ -1,35 +1,44 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, Statistic, Table, Tag, Typography } from "antd";
+import { Button, Card, Statistic, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { Link } from "react-router";
 
 import { adminQueryKeys, getAdminUserStatistics, getCollectionReports } from "../shared/api/adminEndpoints";
 
-interface ApiStatusRow {
+interface OperationRow {
   id: string;
-  endpoint: string;
-  scope: string;
+  description: string;
+  path: string;
   state: string;
 }
 
-const columns: ColumnsType<ApiStatusRow> = [
-  { title: "기능", dataIndex: "id", key: "id" },
-  { title: "엔드포인트", dataIndex: "endpoint", key: "endpoint" },
-  { title: "화면", dataIndex: "scope", key: "scope" },
+const columns: ColumnsType<OperationRow> = [
+  { title: "작업", dataIndex: "id", key: "id" },
+  { title: "설명", dataIndex: "description", key: "description" },
   {
     title: "상태",
     dataIndex: "state",
     key: "state",
     render: (state: string) => <Tag color="blue">{state}</Tag>
+  },
+  {
+    title: "이동",
+    key: "path",
+    render: (_, row) => (
+      <Button size="small">
+        <Link to={row.path}>열기</Link>
+      </Button>
+    )
   }
 ];
 
-const rows: ApiStatusRow[] = [
-  { id: "로그인", endpoint: "POST /admin/auth/login", scope: "관리자 로그인", state: "연동 완료" },
-  { id: "사용자 통계", endpoint: "GET /admin/users/statistics", scope: "사용자", state: "연동 완료" },
-  { id: "컬렉션 신고", endpoint: "GET/PATCH /admin/reports/collections", scope: "신고 관리", state: "연동 완료" },
-  { id: "콘텐츠 수정", endpoint: "PATCH /admin/contents/{contentId}", scope: "콘텐츠", state: "연동 완료" },
-  { id: "약관 생성", endpoint: "POST /admin/terms", scope: "약관 관리", state: "연동 완료" },
-  { id: "TMDB 배치", endpoint: "POST /admin/batch/*", scope: "배치 실행", state: "연동 완료" }
+const rows: OperationRow[] = [
+  { id: "사용자 현황", description: "현재 이용 가능한 사용자 수를 확인합니다.", path: "/admin/users", state: "사용 가능" },
+  { id: "신고 검토", description: "접수된 컬렉션 신고를 확인하고 처리합니다.", path: "/admin/moderation", state: "사용 가능" },
+  { id: "콘텐츠 관리", description: "콘텐츠를 검색하고 제목, 연도, 설명, 장르를 수정합니다.", path: "/admin/content", state: "사용 가능" },
+  { id: "컬렉션 관리", description: "컬렉션을 검색하고 포함 콘텐츠를 수정합니다.", path: "/admin/collections", state: "사용 가능" },
+  { id: "약관 등록", description: "새 약관을 등록하고 적용 시점을 정합니다.", path: "/admin/terms", state: "사용 가능" },
+  { id: "데이터 업데이트", description: "영화, TV, OTT 정보를 최신 상태로 갱신합니다.", path: "/admin/batch", state: "사용 가능" }
 ];
 
 export function OverviewPage() {
@@ -47,9 +56,7 @@ export function OverviewPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>대시보드</Typography.Title>
-          <Typography.Paragraph>
-            현재 백엔드에 구현된 Admin API의 주요 운영 상태를 실제 응답으로 확인합니다.
-          </Typography.Paragraph>
+          <Typography.Paragraph>오늘 확인할 운영 현황과 자주 쓰는 관리 작업을 한곳에서 확인합니다.</Typography.Paragraph>
         </div>
       </header>
 
@@ -70,14 +77,14 @@ export function OverviewPage() {
           />
         </Card>
         <Card>
-          <Statistic title="콘텐츠 수정" value="단건 수정" />
+          <Statistic title="콘텐츠·컬렉션" value="목록 관리" />
         </Card>
         <Card>
-          <Statistic title="배치 실행" value="4종" />
+          <Statistic title="데이터 업데이트" value="4종" />
         </Card>
       </div>
 
-      <Card title="연동된 Admin API">
+      <Card title="바로 할 수 있는 작업">
         <Table rowKey="id" columns={columns} dataSource={rows} pagination={false} />
       </Card>
     </div>

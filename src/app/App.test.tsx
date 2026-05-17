@@ -48,6 +48,15 @@ describe("App routes", () => {
     expect(await screen.findByRole("cell", { name: "추천 컬렉션" })).toBeInTheDocument();
   });
 
+  it("컬렉션 관리 화면에 실제 컬렉션 목록을 표시한다", async () => {
+    mockAdminFetch();
+    signInTestSession();
+    renderRoute("/admin/collections");
+
+    expect(await screen.findByRole("heading", { name: "컬렉션" })).toBeInTheDocument();
+    expect(await screen.findByRole("cell", { name: "추천 컬렉션" })).toBeInTheDocument();
+  });
+
   it("로그인에 성공하면 원래 요청한 관리자 화면으로 이동한다", async () => {
     const user = userEvent.setup();
     mockAdminFetch();
@@ -132,6 +141,31 @@ function mockAdminFetch() {
               reportStatus: "PENDING",
               createdAt: "2026-05-17T10:00:00",
               processedAt: null
+            }
+          ],
+          meta: {
+            type: "CURSOR",
+            returned: 1,
+            nextCursor: null
+          }
+        });
+      }
+
+      if (url.includes("/admin/collections")) {
+        return jsonResponse({
+          data: [
+            {
+              collectionId: 20,
+              title: "추천 컬렉션",
+              description: "설명",
+              imageUrl: null,
+              isPublic: true,
+              moderationStatus: "VISIBLE",
+              bookmarkCount: 1,
+              ownerId: 40,
+              ownerNickname: "소유자",
+              contentCount: 1,
+              createdAt: "2026-05-17T09:00:00"
             }
           ],
           meta: {

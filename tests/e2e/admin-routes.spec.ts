@@ -20,7 +20,7 @@ test("logs in and renders overview route", async ({ page }) => {
   await expect(page.getByText("활성 사용자 수")).toBeVisible();
 });
 
-test("renders API-backed admin routes", async ({ page }) => {
+test("renders main admin routes", async ({ page }) => {
   await mockAdminApi(page);
   await seedAdminSession(page);
 
@@ -31,10 +31,12 @@ test("renders API-backed admin routes", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "사용자" })).toBeVisible();
   await page.goto("/admin/content");
   await expect(page.getByRole("heading", { name: "콘텐츠" })).toBeVisible();
+  await page.goto("/admin/collections");
+  await expect(page.getByRole("heading", { name: "컬렉션" })).toBeVisible();
   await page.goto("/admin/terms");
   await expect(page.getByRole("heading", { name: "약관 관리" })).toBeVisible();
   await page.goto("/admin/batch");
-  await expect(page.getByRole("heading", { name: "배치 실행" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "데이터 업데이트" })).toBeVisible();
 });
 
 test("opens moderation detail and resolves a report", async ({ page }) => {
@@ -50,10 +52,10 @@ test("opens moderation detail and resolves a report", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "신고 관리" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "추천 컬렉션", exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "상세 보기" }).click();
-  await expect(page.getByText("신고 상세")).toBeVisible();
+  await page.getByRole("button", { name: "검토하기" }).click();
+  await expect(page.getByText("신고 검토")).toBeVisible();
   await page.getByLabel("관리자 메모").fill("스팸 신고 확인");
-  await page.getByRole("button", { name: "신고 처리" }).click();
+  await page.getByRole("button", { name: "처리 완료" }).click();
 
   await expect.poll(() => resolutionRequested).toBe(true);
 });
@@ -63,22 +65,32 @@ test("submits content, terms, and batch mutations", async ({ page }) => {
   await seedAdminSession(page);
 
   await page.goto("/admin/content");
-  await page.getByLabel("콘텐츠 ID").fill("1");
+  await expect(page.getByRole("cell", { name: "인셉션" })).toBeVisible();
+  await page.getByRole("row", { name: /인셉션/ }).getByRole("button", { name: "수정하기" }).click();
   await page.getByLabel("제목").fill("인셉션");
-  await page.getByRole("button", { name: "콘텐츠 수정" }).click();
+  await page.getByLabel("콘텐츠 정보 수정").getByRole("button", { name: "수정하기" }).click();
   await expect(page.getByText("크리스토퍼 놀란")).toBeVisible();
+
+  await page.goto("/admin/collections");
+  await expect(page.getByRole("cell", { name: "추천 컬렉션" })).toBeVisible();
+  await page.getByRole("row", { name: /추천 컬렉션/ }).getByRole("button", { name: "수정하기" }).click();
+  await expect(page.getByText("컬렉션 정보 수정")).toBeVisible();
+  await page.getByLabel("제목").fill("추천 컬렉션 수정");
+  await page.getByRole("button", { name: "저장하기" }).click();
+  await expect(page.getByText("컬렉션 정보를 수정했습니다.")).toBeVisible();
 
   await page.goto("/admin/terms");
   await page.getByLabel("버전").fill("1");
   await page.getByLabel("제목").fill("서비스 이용약관");
   await page.getByLabel("본문").fill("본문");
-  await page.getByLabel("활성 시각").fill("2026-05-01T00:00:00");
+  await page.getByLabel("적용 시작 시각").fill("2026-05-01 00:00:00");
+  await page.getByLabel("적용 시작 시각").press("Enter");
   await page.getByRole("button", { name: "약관 생성" }).click();
-  await expect(page.getByText("약관 ID")).toBeVisible();
+  await expect(page.getByText("약관 번호")).toBeVisible();
 
   await page.goto("/admin/batch");
-  await page.getByRole("button", { name: "배치 실행" }).click();
-  await expect(page.getByText("tmdbMovieImportJob")).toBeVisible();
+  await page.getByRole("button", { name: "업데이트 시작" }).click();
+  await expect(page.getByRole("cell", { name: "영화 정보 가져오기" })).toBeVisible();
 });
 
 async function seedAdminSession(page: Page) {
@@ -121,6 +133,43 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
 
     if (method === "GET" && pathname.endsWith("/admin/users/statistics")) {
       await fulfillSuccess(route, { activeUserCount: 123 });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/contents")) {
+      await fulfillSuccess(route, {
+        data: [contentSummary],
+        meta: {
+          type: "CURSOR",
+          returned: 1,
+          nextCursor: null
+        }
+      });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/collections")) {
+      await fulfillSuccess(route, {
+        data: [collectionSummary],
+        meta: {
+          type: "CURSOR",
+          returned: 1,
+          nextCursor: null
+        }
+      });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/collections/20")) {
+      await fulfillSuccess(route, collectionDetail);
+      return;
+    }
+
+    if (method === "PUT" && pathname.endsWith("/admin/collections/20")) {
+      await fulfillSuccess(route, {
+        ...collectionDetail,
+        title: "추천 컬렉션 수정"
+      });
       return;
     }
 
@@ -223,6 +272,33 @@ const reportSummary = {
   processedAt: null
 };
 
+const contentSummary = {
+  id: 1,
+  tmdbId: 100,
+  mediaType: "MOVIE",
+  title: "인셉션",
+  year: 2010,
+  author: "크리스토퍼 놀란",
+  description: "꿈을 다루는 영화",
+  posterUrl: null,
+  bookmarkCount: 5,
+  genreNames: ["SF"]
+};
+
+const collectionSummary = {
+  collectionId: 20,
+  title: "추천 컬렉션",
+  description: "설명",
+  imageUrl: null,
+  isPublic: true,
+  moderationStatus: "VISIBLE",
+  bookmarkCount: 1,
+  ownerId: 40,
+  ownerNickname: "소유자",
+  contentCount: 1,
+  createdAt: "2026-05-17T09:00:00"
+};
+
 const reportDetail = {
   report: {
     reportId: 10,
@@ -265,6 +341,34 @@ const reportDetail = {
       customImageUrl: null,
       reason: "스팸성 설명",
       isSpoiler: false
+    }
+  ]
+};
+
+const collectionDetail = {
+  collectionId: 20,
+  title: "추천 컬렉션",
+  description: "설명",
+  imageUrl: null,
+  isPublic: true,
+  moderationStatus: "VISIBLE",
+  bookmarkCount: 1,
+  createdAt: "2026-05-17T09:00:00",
+  owner: {
+    userId: 40,
+    nickname: "소유자",
+    profileImageUrl: null
+  },
+  contents: [
+    {
+      contentId: 1,
+      title: "인셉션",
+      posterUrl: null,
+      customImageUrl: null,
+      isSpoiler: false,
+      reason: "좋아요",
+      year: 2010,
+      mediaType: "MOVIE"
     }
   ]
 };
