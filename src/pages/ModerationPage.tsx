@@ -85,7 +85,6 @@ export function ModerationPage() {
   }, [detailQuery.data, form]);
 
   const columns: ColumnsType<AdminCollectionReportSummaryRes> = [
-    { title: "신고 번호", dataIndex: "reportId", key: "reportId", width: 90 },
     { title: "컬렉션", dataIndex: "collectionTitle", key: "collectionTitle" },
     {
       title: "신고 사유",
@@ -188,7 +187,6 @@ export function ModerationPage() {
         {selectedDetail ? (
           <div className="drawer-stack">
             <Descriptions title="신고 정보" column={1} bordered size="small">
-              <Descriptions.Item label="신고 번호">{selectedDetail.report.reportId}</Descriptions.Item>
               <Descriptions.Item label="상태">{reportStatusLabels[selectedDetail.report.reportStatus]}</Descriptions.Item>
               <Descriptions.Item label="신고 사유">{renderReasons(selectedDetail.report.reasons)}</Descriptions.Item>
               <Descriptions.Item label="기타 내용">{selectedDetail.report.otherDetail || "-"}</Descriptions.Item>
@@ -197,7 +195,6 @@ export function ModerationPage() {
             </Descriptions>
 
             <Descriptions title="컬렉션" column={1} bordered size="small">
-              <Descriptions.Item label="컬렉션 번호">{selectedDetail.collection.collectionId}</Descriptions.Item>
               <Descriptions.Item label="제목">{selectedDetail.collection.title}</Descriptions.Item>
               <Descriptions.Item label="공개 여부">{isCollectionPublic ? "공개" : "비공개"}</Descriptions.Item>
               <Descriptions.Item label="상태">{selectedDetail.collection.moderationStatus}</Descriptions.Item>
@@ -205,12 +202,8 @@ export function ModerationPage() {
             </Descriptions>
 
             <Descriptions title="사용자" column={1} bordered size="small">
-              <Descriptions.Item label="신고자">
-                {selectedDetail.reporter.nickname} #{selectedDetail.reporter.userId}
-              </Descriptions.Item>
-              <Descriptions.Item label="소유자">
-                {selectedDetail.owner.nickname} #{selectedDetail.owner.userId}
-              </Descriptions.Item>
+              <Descriptions.Item label="신고자">{selectedDetail.reporter.nickname}</Descriptions.Item>
+              <Descriptions.Item label="소유자">{selectedDetail.owner.nickname}</Descriptions.Item>
             </Descriptions>
 
             <Table
@@ -220,7 +213,6 @@ export function ModerationPage() {
               pagination={false}
               dataSource={selectedDetail.contents}
               columns={[
-                { title: "콘텐츠 번호", dataIndex: "contentId", key: "contentId" },
                 { title: "제목", dataIndex: "title", key: "title" },
                 { title: "메모", dataIndex: "reason", key: "reason", render: (value: string | null) => value || "-" },
                 {

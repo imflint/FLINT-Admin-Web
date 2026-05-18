@@ -42,7 +42,7 @@ export function ContentPage() {
       updateContent(contentId, payload),
     onSuccess: async (content) => {
       setSelectedContent(content);
-      void message.success("콘텐츠 정보를 수정했습니다.");
+      void message.success("컨텐츠 정보를 수정했습니다.");
       await queryClient.invalidateQueries({ queryKey: ["admin", "contents"] });
     }
   });
@@ -64,7 +64,6 @@ export function ContentPage() {
   }, [form, selectedContent]);
 
   const columns: ColumnsType<AdminContentRes> = [
-    { title: "콘텐츠 번호", dataIndex: "id", key: "id", width: 110 },
     { title: "제목", dataIndex: "title", key: "title" },
     {
       title: "종류",
@@ -114,13 +113,12 @@ export function ContentPage() {
     <div className="page-stack">
       <header className="page-header">
         <div>
-          <Typography.Title level={1}>콘텐츠</Typography.Title>
-          <Typography.Paragraph>콘텐츠를 검색해 제목, 연도, 설명, 장르를 수정합니다.</Typography.Paragraph>
+          <Typography.Title level={1}>Contents</Typography.Title>
         </div>
       </header>
 
       <Card
-        title="콘텐츠 목록"
+        title="컨텐츠 목록"
         extra={
           <Space>
             <Input.Search
@@ -131,7 +129,7 @@ export function ContentPage() {
               onSearch={handleSearch}
             />
             <Select<MediaTypeFilter>
-              aria-label="콘텐츠 종류"
+              aria-label="컨텐츠 종류"
               value={mediaType}
               className="status-select"
               onChange={(value) => {
@@ -150,7 +148,7 @@ export function ContentPage() {
           </Space>
         }
       >
-        {contentsQuery.isError ? <Alert type="error" showIcon message="콘텐츠 목록을 불러오지 못했습니다." /> : null}
+        {contentsQuery.isError ? <Alert type="error" showIcon message="컨텐츠 목록을 불러오지 못했습니다." /> : null}
         <Table
           rowKey="id"
           columns={columns}
@@ -173,7 +171,7 @@ export function ContentPage() {
       </Card>
 
       <Drawer
-        title="콘텐츠 정보 수정"
+        title="컨텐츠 정보 수정"
         size="large"
         open={selectedContent !== null}
         onClose={() => setSelectedContent(null)}
@@ -182,7 +180,6 @@ export function ContentPage() {
         {selectedContent ? (
           <div className="drawer-stack">
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="콘텐츠 번호">{selectedContent.id}</Descriptions.Item>
               <Descriptions.Item label="종류">{formatMediaType(selectedContent.mediaType)}</Descriptions.Item>
               <Descriptions.Item label="저장 수">{selectedContent.bookmarkCount}</Descriptions.Item>
             </Descriptions>

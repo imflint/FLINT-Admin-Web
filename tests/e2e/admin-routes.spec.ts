@@ -18,6 +18,10 @@ test("logs in and renders overview route", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
   await expect(page.getByText("가입 회원 수")).toBeVisible();
+  await expect(page.getByText("일별 방문자·신규 가입·회원 수")).toBeVisible();
+  await expect(page.getByText("7일")).toBeVisible();
+  await expect(page.getByText("30일")).toBeVisible();
+  await expect(page.getByText("전체")).toBeVisible();
 });
 
 test("renders main admin routes", async ({ page }) => {
@@ -30,11 +34,17 @@ test("renders main admin routes", async ({ page }) => {
   await page.goto("/admin/users");
   await expect(page.getByRole("heading", { name: "사용자" })).toBeVisible();
   await page.goto("/admin/content");
-  await expect(page.getByRole("heading", { name: "콘텐츠" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Contents" })).toBeVisible();
   await page.goto("/admin/collections");
-  await expect(page.getByRole("heading", { name: "컬렉션" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Collections" })).toBeVisible();
   await page.goto("/admin/terms");
   await expect(page.getByRole("heading", { name: "약관 관리" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "서비스 이용약관 v1" })).toBeVisible();
+  await expect(page.getByText("서비스 이용약관 본문입니다.")).toBeHidden();
+  await page.getByRole("button", { name: "본문 보기" }).click();
+  await expect(page.getByText("서비스 이용약관 본문입니다.")).toBeVisible();
+  await page.goto("/admin/account");
+  await expect(page.getByRole("heading", { name: "계정 설정" })).toBeVisible();
 });
 
 test("opens moderation detail and resolves a report", async ({ page }) => {
@@ -66,7 +76,7 @@ test("submits content and terms mutations", async ({ page }) => {
   await expect(page.getByRole("cell", { name: "인셉션" })).toBeVisible();
   await page.getByRole("row", { name: /인셉션/ }).getByRole("button", { name: "수정하기" }).click();
   await page.getByLabel("제목").fill("인셉션");
-  await page.getByLabel("콘텐츠 정보 수정").getByRole("button", { name: "수정하기" }).click();
+  await page.getByLabel("컨텐츠 정보 수정").getByRole("button", { name: "수정하기" }).click();
   await expect(page.getByText("크리스토퍼 놀란")).toBeVisible();
 
   await page.goto("/admin/collections");
@@ -78,13 +88,29 @@ test("submits content and terms mutations", async ({ page }) => {
   await expect(page.getByText("컬렉션 정보를 수정했습니다.")).toBeVisible();
 
   await page.goto("/admin/terms");
+  await expect(page.getByRole("cell", { name: "서비스 이용약관 v1" })).toBeVisible();
   await page.getByLabel("버전").fill("1");
   await page.getByLabel("제목").fill("서비스 이용약관");
   await page.getByLabel("본문").fill("본문");
   await page.getByLabel("적용 시작 시각").fill("2026-05-01 00:00:00");
   await page.getByLabel("적용 시작 시각").press("Enter");
   await page.getByRole("button", { name: "약관 생성" }).click();
-  await expect(page.getByText("약관 번호")).toBeVisible();
+  await expect(page.getByText("약관을 생성했습니다.").first()).toBeVisible();
+});
+
+test("updates admin account and redirects to login", async ({ page }) => {
+  await mockAdminApi(page);
+  await seedAdminSession(page);
+  await page.goto("/admin/account");
+
+  await expect(page.getByRole("heading", { name: "계정 설정" })).toBeVisible();
+  await page.getByLabel("아이디").fill("operator");
+  await page.getByLabel("현재 비밀번호").fill("current-password");
+  await page.getByLabel("새 비밀번호", { exact: true }).fill("new-password");
+  await page.getByLabel("새 비밀번호 확인").fill("new-password");
+  await page.getByRole("button", { name: "저장하기" }).click();
+
+  await expect(page.getByRole("heading", { name: "관리자 로그인" })).toBeVisible();
 });
 
 async function seedAdminSession(page: Page) {
@@ -127,6 +153,41 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
 
     if (method === "GET" && pathname.endsWith("/admin/users/statistics")) {
       await fulfillSuccess(route, { activeUserCount: 123 });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/users/daily-activity")) {
+      await fulfillSuccess(route, {
+        dailyMetrics: [
+          {
+            date: "2026-05-17",
+            visitorCount: 10,
+            signupUserCount: 2,
+            memberCount: 100
+          },
+          {
+            date: "2026-05-18",
+            visitorCount: 12,
+            signupUserCount: 3,
+            memberCount: 103
+          }
+        ]
+      });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/me")) {
+      await fulfillSuccess(route, adminMe);
+      return;
+    }
+
+    if (method === "PATCH" && pathname.endsWith("/admin/me")) {
+      await fulfillSuccess(route, {
+        ...adminMe,
+        username: "operator",
+        passwordChangedAt: "2026-05-18T11:00:00",
+        updatedAt: "2026-05-18T11:00:00"
+      });
       return;
     }
 
@@ -212,17 +273,13 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
       return;
     }
 
+    if (method === "GET" && pathname.endsWith("/admin/terms")) {
+      await fulfillSuccess(route, [termsSummary]);
+      return;
+    }
+
     if (method === "POST" && pathname.endsWith("/admin/terms")) {
-      await fulfillSuccess(route, {
-        id: 1,
-        type: "SERVICE",
-        context: "SIGNUP",
-        version: 1,
-        title: "서비스 이용약관",
-        content: "본문",
-        required: true,
-        activeAt: "2026-05-01T00:00:00"
-      });
+      await fulfillSuccess(route, termsSummary);
       return;
     }
 
@@ -283,6 +340,25 @@ const collectionSummary = {
   ownerNickname: "소유자",
   contentCount: 1,
   createdAt: "2026-05-17T09:00:00"
+};
+
+const adminMe = {
+  adminId: 1,
+  username: "admin",
+  passwordChangedAt: "2026-05-18T10:00:00",
+  createdAt: "2026-05-18T10:00:00",
+  updatedAt: "2026-05-18T10:00:00"
+};
+
+const termsSummary = {
+  id: 1,
+  type: "SERVICE",
+  context: "SIGNUP",
+  version: 1,
+  title: "서비스 이용약관 v1",
+  content: "서비스 이용약관 본문입니다.",
+  required: true,
+  activeAt: "2026-05-01T00:00:00"
 };
 
 const reportDetail = {
