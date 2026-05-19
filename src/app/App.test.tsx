@@ -161,13 +161,13 @@ function mockAdminFetch() {
         return jsonResponse({
           dailyMetrics: [
             {
-              date: "2026-05-17",
+              date: "2026-05-16",
               visitorCount: 10,
               signupUserCount: 2,
               memberCount: 100
             },
             {
-              date: "2026-05-18",
+              date: "2026-05-17",
               visitorCount: 12,
               signupUserCount: 3,
               memberCount: 103
