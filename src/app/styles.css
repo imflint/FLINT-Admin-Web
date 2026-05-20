@@ -169,6 +169,25 @@ textarea {
   margin: 0;
 }
 
+.terms-markdown-editor .w-md-editor {
+  border-color: #d9d9d9;
+  box-shadow: none;
+}
+
+.terms-markdown-editor .w-md-editor:focus-within {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgb(5 145 255 / 10%);
+}
+
+.terms-markdown .wmde-markdown {
+  background: transparent;
+  color: #111827;
+}
+
+.terms-markdown .wmde-markdown:first-child {
+  padding: 0;
+}
+
 .full-width-control,
 .status-select {
   width: 100%;
