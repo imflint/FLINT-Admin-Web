@@ -106,7 +106,11 @@ export function OverviewPage() {
               height={320}
               shapeField="smooth"
               scale={{ y: { domain: [0, chartMaxValue] } }}
-              axis={{ y: { labelFormatter: (value: string) => `${value}명` } }}
+              axis={{ y: { labelFormatter: formatCountLabel } }}
+              tooltip={{
+                title: (item: { date?: string }) => item.date ?? "",
+                items: [{ field: "value", name: selectedMetricLabel, valueFormatter: formatCountLabel }]
+              }}
               interaction={{ tooltip: { marker: false } }}
               style={{ lineWidth: 2 }}
             />
@@ -127,4 +131,8 @@ function toChartData(metrics: AdminDailyUserMetricRes[] = [], metricKey: DailyUs
 function resolveChartMaxValue(data: { value: number }[]) {
   const maxValue = Math.max(0, ...data.map((item) => item.value));
   return maxValue > 0 ? maxValue : 1;
+}
+
+function formatCountLabel(value: string | number) {
+  return `${Math.round(Number(value))}명`;
 }
