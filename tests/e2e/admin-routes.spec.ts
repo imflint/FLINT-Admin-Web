@@ -18,7 +18,10 @@ test("logs in and renders overview route", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
   await expect(page.getByText("가입 회원 수")).toBeVisible();
-  await expect(page.getByText("일별 방문자·신규 가입·회원 수")).toBeVisible();
+  await expect(page.getByText("일별 사용자 지표")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "방문자" })).toBeVisible();
+  await expect(page.locator(".ant-segmented-item-label", { hasText: "신규 가입" })).toBeVisible();
+  await expect(page.locator(".ant-segmented-item-label", { hasText: "회원 수" })).toBeVisible();
   await expect(page.getByText("7일")).toBeVisible();
   await expect(page.getByText("30일")).toBeVisible();
   await expect(page.getByText("전체")).toBeVisible();
@@ -32,7 +35,8 @@ test("renders main admin routes", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
   await page.goto("/admin/users");
-  await expect(page.getByRole("heading", { name: "사용자" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "회원 관리" })).toBeVisible();
+  await expect(page.getByText("플린트")).toBeVisible();
   await page.goto("/admin/content");
   await expect(page.getByRole("heading", { name: "Contents" })).toBeVisible();
   await page.goto("/admin/collections");
@@ -66,6 +70,27 @@ test("opens moderation detail and resolves a report", async ({ page }) => {
   await page.getByRole("button", { name: "처리 완료" }).click();
 
   await expect.poll(() => resolutionRequested).toBe(true);
+});
+
+test("opens user detail and applies a user moderation", async ({ page }) => {
+  let userModerationRequested = false;
+  await mockAdminApi(page, {
+    onUserModeration: () => {
+      userModerationRequested = true;
+    }
+  });
+  await seedAdminSession(page);
+  await page.goto("/admin/users");
+
+  await expect(page.getByRole("heading", { name: "회원 관리" })).toBeVisible();
+  await expect(page.getByText("플린트")).toBeVisible();
+
+  await page.getByRole("button", { name: "상세 보기" }).click();
+  await expect(page.getByText("회원 상세")).toBeVisible();
+  await page.getByLabel("관리자 메모").fill("운영 확인");
+  await page.getByRole("button", { name: "저장" }).click();
+
+  await expect.poll(() => userModerationRequested).toBe(true);
 });
 
 test("submits content and terms mutations", async ({ page }) => {
@@ -126,7 +151,10 @@ async function seedAdminSession(page: Page) {
   });
 }
 
-async function mockAdminApi(page: Page, options: { onResolution?: () => void } = {}) {
+async function mockAdminApi(
+  page: Page,
+  options: { onResolution?: () => void; onUserModeration?: () => void } = {}
+) {
   await page.route("**/api/v1/admin/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -171,6 +199,46 @@ async function mockAdminApi(page: Page, options: { onResolution?: () => void } =
             signupUserCount: 3,
             memberCount: 103
           }
+        ]
+      });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/users")) {
+      await fulfillSuccess(route, {
+        data: [userSummary],
+        meta: {
+          type: "OFFSET",
+          returned: 1,
+          page: 1,
+          size: 10,
+          totalElements: 1,
+          totalPages: 1
+        }
+      });
+      return;
+    }
+
+    if (method === "GET" && pathname.endsWith("/admin/users/10")) {
+      await fulfillSuccess(route, userDetail);
+      return;
+    }
+
+    if (method === "POST" && pathname.endsWith("/admin/users/10/moderations")) {
+      options.onUserModeration?.();
+      await fulfillSuccess(route, {
+        ...userDetail,
+        warningCount: 2,
+        recentModerations: [
+          {
+            historyId: 2,
+            adminId: 1,
+            action: "WARN",
+            actionExpiresAt: null,
+            adminMemo: "운영 확인",
+            createdAt: "2026-05-20T10:00:00"
+          },
+          ...userDetail.recentModerations
         ]
       });
       return;
@@ -359,6 +427,38 @@ const termsSummary = {
   content: "서비스 이용약관 본문입니다.",
   required: true,
   activeAt: "2026-05-01T00:00:00"
+};
+
+const userSummary = {
+  userId: 10,
+  nickname: "플린트",
+  profileImageUrl: null,
+  userRole: "FLINER",
+  status: "ACTIVE",
+  warningCount: 1,
+  uploadRestricted: false,
+  uploadRestrictedUntil: null,
+  suspended: false,
+  suspendedUntil: null,
+  createdAt: "2026-05-01T09:00:00"
+};
+
+const userDetail = {
+  ...userSummary,
+  uploadRestrictedAt: null,
+  suspendedAt: null,
+  deletedAt: null,
+  updatedAt: "2026-05-02T09:00:00",
+  recentModerations: [
+    {
+      historyId: 1,
+      adminId: 1,
+      action: "WARN",
+      actionExpiresAt: null,
+      adminMemo: "메모",
+      createdAt: "2026-05-02T10:00:00"
+    }
+  ]
 };
 
 const reportDetail = {

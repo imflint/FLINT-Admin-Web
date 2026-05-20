@@ -170,6 +170,15 @@ textarea {
   margin: 0;
 }
 
+.chart-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.chart-panel h3 {
+  margin: 0;
+}
+
 .full-width-control,
 .status-select {
   width: 100%;
@@ -177,6 +186,10 @@ textarea {
 
 .status-select {
   min-width: 140px;
+}
+
+.user-filter-bar .ant-input-search {
+  width: 240px;
 }
 
 .login-page {

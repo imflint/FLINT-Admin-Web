@@ -1,6 +1,6 @@
 import { Line } from "@ant-design/charts";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Card, Segmented, Statistic, Typography } from "antd";
+import { Alert, Card, Segmented, Space, Statistic, Typography } from "antd";
 import { useState } from "react";
 
 import {
@@ -11,14 +11,22 @@ import {
 } from "../shared/api/adminEndpoints";
 import type { AdminDailyUserMetricRes, AdminDailyUserMetricsRange } from "../shared/api/adminTypes";
 
+type DailyUserMetricKey = "visitorCount" | "signupUserCount" | "memberCount";
+
 const dailyUserMetricsRangeOptions: { label: string; value: AdminDailyUserMetricsRange }[] = [
   { label: "7일", value: "DAYS_7" },
   { label: "30일", value: "DAYS_30" },
   { label: "전체", value: "ALL" }
 ];
+const dailyUserMetricOptions: { label: string; value: DailyUserMetricKey }[] = [
+  { label: "방문자", value: "visitorCount" },
+  { label: "신규 가입", value: "signupUserCount" },
+  { label: "회원 수", value: "memberCount" }
+];
 
 export function OverviewPage() {
   const [dailyUserMetricsRange, setDailyUserMetricsRange] = useState<AdminDailyUserMetricsRange>("DAYS_30");
+  const [selectedMetric, setSelectedMetric] = useState<DailyUserMetricKey>("visitorCount");
   const dailyUserMetricsParams = { range: dailyUserMetricsRange };
   const userStatisticsQuery = useQuery({
     queryKey: adminQueryKeys.userStatistics,
@@ -32,7 +40,8 @@ export function OverviewPage() {
     queryKey: adminQueryKeys.dailyUserMetrics(dailyUserMetricsParams),
     queryFn: () => getAdminDailyUserMetrics(dailyUserMetricsParams)
   });
-  const chartData = toChartData(dailyUserMetricsQuery.data?.dailyMetrics);
+  const selectedMetricLabel = dailyUserMetricOptions.find((option) => option.value === selectedMetric)?.label ?? "방문자";
+  const chartData = toChartData(dailyUserMetricsQuery.data?.dailyMetrics, selectedMetric);
 
   return (
     <div className="page-stack">
@@ -62,14 +71,22 @@ export function OverviewPage() {
       </div>
 
       <Card
-        title="일별 방문자·신규 가입·회원 수"
+        title="일별 사용자 지표"
         extra={
-          <Segmented
-            aria-label="기간 선택"
-            options={dailyUserMetricsRangeOptions}
-            value={dailyUserMetricsRange}
-            onChange={(value) => setDailyUserMetricsRange(value as AdminDailyUserMetricsRange)}
-          />
+          <Space wrap>
+            <Segmented
+              aria-label="지표 선택"
+              options={dailyUserMetricOptions}
+              value={selectedMetric}
+              onChange={(value) => setSelectedMetric(value as DailyUserMetricKey)}
+            />
+            <Segmented
+              aria-label="기간 선택"
+              options={dailyUserMetricsRangeOptions}
+              value={dailyUserMetricsRange}
+              onChange={(value) => setDailyUserMetricsRange(value as AdminDailyUserMetricsRange)}
+            />
+          </Space>
         }
       >
         {dailyUserMetricsQuery.isError ? (
@@ -79,40 +96,29 @@ export function OverviewPage() {
           <Typography.Text type="secondary">그래프를 불러오는 중입니다.</Typography.Text>
         ) : null}
         {!dailyUserMetricsQuery.isPending && !dailyUserMetricsQuery.isError ? (
-          <Line
-            data={chartData}
-            xField="date"
-            yField="value"
-            colorField="metric"
-            height={320}
-            point={{ shapeField: "circle", sizeField: 3 }}
-            scale={{ y: { domainMin: 0 } }}
-            axis={{ y: { labelFormatter: (value: string) => `${value}명` } }}
-            interaction={{ tooltip: { marker: false } }}
-            style={{ lineWidth: 2 }}
-          />
+          <div className="chart-panel">
+            <Typography.Title level={3}>{selectedMetricLabel}</Typography.Title>
+            <Line
+              data={chartData}
+              xField="date"
+              yField="value"
+              height={320}
+              shapeField="smooth"
+              scale={{ y: { domainMin: 0, nice: true } }}
+              axis={{ y: { labelFormatter: (value: string) => `${value}명` } }}
+              interaction={{ tooltip: { marker: false } }}
+              style={{ lineWidth: 2 }}
+            />
+          </div>
         ) : null}
       </Card>
     </div>
   );
 }
 
-function toChartData(metrics: AdminDailyUserMetricRes[] = []) {
-  return metrics.flatMap((metric) => [
-    {
-      date: metric.date,
-      metric: "방문자",
-      value: metric.visitorCount
-    },
-    {
-      date: metric.date,
-      metric: "신규 가입",
-      value: metric.signupUserCount
-    },
-    {
-      date: metric.date,
-      metric: "회원 수",
-      value: metric.memberCount
-    }
-  ]);
+function toChartData(metrics: AdminDailyUserMetricRes[] = [], metricKey: DailyUserMetricKey) {
+  return metrics.map((metric) => ({
+    date: metric.date,
+    value: metric[metricKey]
+  }));
 }

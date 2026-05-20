@@ -5,7 +5,9 @@ import type {
   ReportStatus,
   TermsContext,
   TermsType,
-  UserModerationAction
+  UserModerationAction,
+  UserRole,
+  UserStatus
 } from "./adminTypes";
 
 export const reportStatusLabels: Record<ReportStatus, string> = {
@@ -38,6 +40,17 @@ export const userActionLabels: Record<UserModerationAction, string> = {
   RESTRICT_UPLOAD: "업로드 제한",
   SUSPEND: "계정 정지",
   KEEP: "조치 없음"
+};
+
+export const userStatusLabels: Record<UserStatus, string> = {
+  ACTIVE: "정상",
+  WITHDRAWN: "탈퇴"
+};
+
+export const userRoleLabels: Record<UserRole, string> = {
+  ADMIN: "관리자",
+  FLINER: "일반 회원",
+  FLING: "게스트"
 };
 
 export const termsTypeLabels: Record<TermsType, string> = {

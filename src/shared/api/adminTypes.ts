@@ -10,6 +10,8 @@ export type TermsContext = "SIGNUP" | "WITHDRAWAL";
 export type TermsSortBy = "VERSION" | "TYPE";
 export type SortDirection = "ASC" | "DESC";
 export type AdminDailyUserMetricsRange = "DAYS_7" | "DAYS_30" | "ALL";
+export type UserStatus = "ACTIVE" | "WITHDRAWN";
+export type UserRole = "ADMIN" | "FLINER" | "FLING";
 
 export interface PaginationResponse<T> {
   data: T[];
@@ -41,6 +43,54 @@ export interface AdminLoginRes {
 
 export interface AdminUserStatisticsRes {
   activeUserCount: number;
+}
+
+export interface AdminUserSummaryRes {
+  userId: number;
+  nickname: string;
+  profileImageUrl?: string | null;
+  userRole: UserRole;
+  status: UserStatus;
+  warningCount: number;
+  uploadRestricted: boolean;
+  uploadRestrictedUntil?: string | null;
+  suspended: boolean;
+  suspendedUntil?: string | null;
+  createdAt: string;
+}
+
+export interface AdminUserDetailRes {
+  userId: number;
+  nickname: string;
+  profileImageUrl?: string | null;
+  userRole: UserRole;
+  status: UserStatus;
+  warningCount: number;
+  uploadRestricted: boolean;
+  uploadRestrictedAt?: string | null;
+  uploadRestrictedUntil?: string | null;
+  suspended: boolean;
+  suspendedAt?: string | null;
+  suspendedUntil?: string | null;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  recentModerations: AdminUserModerationHistoryRes[];
+}
+
+export interface AdminUserModerationHistoryRes {
+  historyId: number;
+  adminId: number;
+  action: UserModerationAction;
+  actionExpiresAt?: string | null;
+  adminMemo?: string | null;
+  createdAt?: string | null;
+}
+
+export interface AdminUserModerationReq {
+  action: Exclude<UserModerationAction, "KEEP">;
+  expiresAt?: string | null;
+  adminMemo?: string;
 }
 
 export interface AdminDailyUserMetricsRes {
