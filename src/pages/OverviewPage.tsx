@@ -42,6 +42,7 @@ export function OverviewPage() {
   });
   const selectedMetricLabel = dailyUserMetricOptions.find((option) => option.value === selectedMetric)?.label ?? "방문자";
   const chartData = toChartData(dailyUserMetricsQuery.data?.dailyMetrics, selectedMetric);
+  const chartMaxValue = resolveChartMaxValue(chartData);
 
   return (
     <div className="page-stack">
@@ -104,7 +105,7 @@ export function OverviewPage() {
               yField="value"
               height={320}
               shapeField="smooth"
-              scale={{ y: { domainMin: 0, nice: true } }}
+              scale={{ y: { domain: [0, chartMaxValue] } }}
               axis={{ y: { labelFormatter: (value: string) => `${value}명` } }}
               interaction={{ tooltip: { marker: false } }}
               style={{ lineWidth: 2 }}
@@ -121,4 +122,9 @@ function toChartData(metrics: AdminDailyUserMetricRes[] = [], metricKey: DailyUs
     date: metric.date,
     value: metric[metricKey]
   }));
+}
+
+function resolveChartMaxValue(data: { value: number }[]) {
+  const maxValue = Math.max(0, ...data.map((item) => item.value));
+  return maxValue > 0 ? maxValue : 1;
 }
