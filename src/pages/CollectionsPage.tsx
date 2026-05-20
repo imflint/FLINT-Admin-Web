@@ -98,13 +98,13 @@ export function CollectionsPage() {
     detailQuery.data?.contents.forEach((content) => {
       optionMap.set(content.contentId, {
         value: content.contentId,
-        label: formatContentOption(content.contentId, content.title, content.mediaType, content.year)
+        label: formatContentOption(content.title, content.mediaType, content.year)
       });
     });
     contentOptionsQuery.data?.data.forEach((content) => {
       optionMap.set(content.id, {
         value: content.id,
-        label: formatContentOption(content.id, content.title, content.mediaType, content.year)
+        label: formatContentOption(content.title, content.mediaType, content.year)
       });
     });
 
@@ -112,7 +112,6 @@ export function CollectionsPage() {
   }, [contentOptionsQuery.data?.data, detailQuery.data?.contents]);
 
   const columns: ColumnsType<AdminCollectionSummaryRes> = [
-    { title: "컬렉션 번호", dataIndex: "collectionId", key: "collectionId", width: 110 },
     { title: "제목", dataIndex: "title", key: "title" },
     { title: "작성자", dataIndex: "ownerNickname", key: "ownerNickname", render: (value: string | null) => value || "-" },
     {
@@ -163,8 +162,7 @@ export function CollectionsPage() {
     <div className="page-stack">
       <header className="page-header">
         <div>
-          <Typography.Title level={1}>컬렉션</Typography.Title>
-          <Typography.Paragraph>컬렉션을 검색해 기본 정보와 포함 콘텐츠를 수정합니다.</Typography.Paragraph>
+          <Typography.Title level={1}>Collections</Typography.Title>
         </div>
       </header>
 
@@ -247,10 +245,7 @@ export function CollectionsPage() {
         {detailQuery.data ? (
           <div className="drawer-stack">
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="컬렉션 번호">{detailQuery.data.collectionId}</Descriptions.Item>
-              <Descriptions.Item label="작성자">
-                {detailQuery.data.owner.nickname || "-"} #{detailQuery.data.owner.userId ?? "-"}
-              </Descriptions.Item>
+              <Descriptions.Item label="작성자">{detailQuery.data.owner.nickname || "-"}</Descriptions.Item>
               <Descriptions.Item label="상태">
                 {collectionStatusLabels[detailQuery.data.moderationStatus] ?? detailQuery.data.moderationStatus}
               </Descriptions.Item>
@@ -281,7 +276,7 @@ export function CollectionsPage() {
                       </Button>
                     </Space>
                     {fields.map((field) => (
-                      <Card key={field.key} size="small" title={`콘텐츠 ${field.name + 1}`}>
+                      <Card key={field.key} size="small" title="콘텐츠 항목">
                         <Form.Item
                           label="콘텐츠"
                           name={[field.name, "contentId"]}
@@ -363,8 +358,8 @@ function normalizeOptionalText(value: string | undefined) {
   return normalized || undefined;
 }
 
-function formatContentOption(contentId: number, title: string, mediaType: MediaType, year: number) {
-  return `${title} (${formatMediaType(mediaType)} ${year}) #${contentId}`;
+function formatContentOption(title: string, mediaType: MediaType, year: number) {
+  return `${title} (${formatMediaType(mediaType)} ${year})`;
 }
 
 function formatMediaType(value: MediaType) {

@@ -9,8 +9,12 @@ import type {
   AdminCollectionReportSummaryRes,
   AdminContentRes,
   AdminContentUpdateReq,
+  AdminDailyUserMetricsRange,
+  AdminDailyUserMetricsRes,
   AdminLoginReq,
   AdminLoginRes,
+  AdminMeRes,
+  AdminProfileUpdateReq,
   AdminRefreshTokenReq,
   AdminUserStatisticsRes,
   CollectionModerationStatus,
@@ -18,16 +22,20 @@ import type {
   PaginationResponse,
   ReportStatus,
   TermsCreateReq,
+  TermsListParams,
   TermsRes
 } from "./adminTypes";
 
 export const adminQueryKeys = {
+  me: ["admin", "me"] as const,
   userStatistics: ["admin", "users", "statistics"] as const,
+  dailyUserMetrics: (params: AdminDailyUserMetricsParams) => ["admin", "users", "daily-activity", params] as const,
   contents: (params: AdminContentListParams) => ["admin", "contents", params] as const,
   collections: (params: AdminCollectionListParams) => ["admin", "collections", params] as const,
   collection: (collectionId: number) => ["admin", "collections", collectionId] as const,
   collectionReports: (params: CollectionReportsParams) => ["admin", "reports", "collections", params] as const,
-  collectionReport: (reportId: number) => ["admin", "reports", "collections", reportId] as const
+  collectionReport: (reportId: number) => ["admin", "reports", "collections", reportId] as const,
+  terms: (params: TermsListParams) => ["admin", "terms", params] as const
 };
 
 export interface AdminContentListParams {
@@ -51,6 +59,12 @@ export interface CollectionReportsParams {
   size?: number;
 }
 
+export interface AdminDailyUserMetricsParams {
+  range?: AdminDailyUserMetricsRange;
+  from?: string;
+  to?: string;
+}
+
 export function loginAdmin(request: AdminLoginReq) {
   return adminApi<AdminLoginRes>("/admin/auth/login", {
     method: "POST",
@@ -70,6 +84,21 @@ export function refreshAdminTokens(request: AdminRefreshTokenReq) {
 
 export function getAdminUserStatistics() {
   return adminApi<AdminUserStatisticsRes>("/admin/users/statistics");
+}
+
+export function getAdminDailyUserMetrics(params: AdminDailyUserMetricsParams = {}) {
+  return adminApi<AdminDailyUserMetricsRes>(withQuery("/admin/users/daily-activity", params));
+}
+
+export function getAdminMe() {
+  return adminApi<AdminMeRes>("/admin/me");
+}
+
+export function updateAdminMe(request: AdminProfileUpdateReq) {
+  return adminApi<AdminMeRes>("/admin/me", {
+    method: "PATCH",
+    body: request
+  });
 }
 
 export function getAdminContents(params: AdminContentListParams = {}) {
@@ -120,6 +149,10 @@ export function createTerms(request: TermsCreateReq) {
     method: "POST",
     body: request
   });
+}
+
+export function getTerms(params: TermsListParams = {}) {
+  return adminApi<TermsRes[]>(withQuery("/admin/terms", params));
 }
 
 function withQuery(path: string, params: object) {

@@ -4,6 +4,7 @@ import {
   FolderOpenOutlined,
   LogoutOutlined,
   SafetyOutlined,
+  UserOutlined,
   VideoCameraOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import type { MenuProps } from "antd";
 import type { ReactNode } from "react";
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router";
 
+import { AccountPage } from "../pages/AccountPage";
 import { CollectionsPage } from "../pages/CollectionsPage";
 import { ContentPage } from "../pages/ContentPage";
 import { LoginPage } from "../pages/LoginPage";
@@ -33,7 +35,7 @@ const navigationItems: MenuProps["items"] = [
   {
     key: "/admin/content",
     icon: <VideoCameraOutlined />,
-    label: <Link to="/admin/content">콘텐츠</Link>
+    label: <Link to="/admin/content">컨텐츠</Link>
   },
   {
     key: "/admin/collections",
@@ -91,7 +93,9 @@ function AdminLayout() {
             <Typography.Text type="secondary">
               가입 회원 {userStatisticsQuery.data?.activeUserCount ?? "-"}명
             </Typography.Text>
-            <Typography.Text type="secondary">관리자 계정</Typography.Text>
+            <Link to="/admin/account">
+              <Button icon={<UserOutlined />}>계정 설정</Button>
+            </Link>
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>
               로그아웃
             </Button>
@@ -136,6 +140,7 @@ export function App() {
         <Route path="collections" element={<CollectionsPage />} />
         <Route path="moderation" element={<ModerationPage />} />
         <Route path="terms" element={<TermsPage />} />
+        <Route path="account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin/overview" replace />} />
     </Routes>

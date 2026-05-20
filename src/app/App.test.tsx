@@ -8,6 +8,10 @@ import { adminApi } from "../shared/api/adminApi";
 import type { AdminUserStatisticsRes } from "../shared/api/adminTypes";
 import { clearAdminSession, saveAdminSession } from "../shared/auth/adminSession";
 
+vi.mock("@ant-design/charts", () => ({
+  Line: () => <div role="img" aria-label="사용자 지표 그래프" />
+}));
+
 function renderRoute(path: string) {
   window.history.pushState({}, "", path);
 
@@ -31,6 +35,11 @@ describe("App routes", () => {
     renderRoute("/admin");
 
     expect(await screen.findByRole("heading", { name: "대시보드" })).toBeInTheDocument();
+    expect(await screen.findByText("일별 방문자·신규 가입·회원 수")).toBeInTheDocument();
+    expect(screen.getByText("7일")).toBeInTheDocument();
+    expect(screen.getByText("30일")).toBeInTheDocument();
+    expect(screen.getByText("전체")).toBeInTheDocument();
+    expect(screen.queryByText("바로 할 수 있는 작업")).not.toBeInTheDocument();
   });
 
   it("인증되지 않은 사용자는 관리자 화면에서 로그인으로 이동한다", async () => {
@@ -53,8 +62,32 @@ describe("App routes", () => {
     signInTestSession();
     renderRoute("/admin/collections");
 
-    expect(await screen.findByRole("heading", { name: "컬렉션" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Collections" })).toBeInTheDocument();
     expect(await screen.findByRole("cell", { name: "추천 컬렉션" })).toBeInTheDocument();
+  });
+
+  it("계정 설정 화면에 관리자 본인 정보를 표시한다", async () => {
+    mockAdminFetch();
+    signInTestSession();
+    renderRoute("/admin/account");
+
+    expect(await screen.findByRole("heading", { name: "계정 설정" })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("admin")).toBeInTheDocument();
+  });
+
+  it("약관 관리 화면에 약관 목록을 표시한다", async () => {
+    const user = userEvent.setup();
+    mockAdminFetch();
+    signInTestSession();
+    renderRoute("/admin/terms");
+
+    expect(await screen.findByRole("heading", { name: "약관 관리" })).toBeInTheDocument();
+    expect(await screen.findByRole("cell", { name: "서비스 이용약관 v1" })).toBeInTheDocument();
+    expect(screen.queryByText("서비스 이용약관 본문입니다.")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "본문 보기" }));
+
+    expect(await screen.findByText("서비스 이용약관 본문입니다.")).toBeInTheDocument();
   });
 
   it("로그인에 성공하면 원래 요청한 관리자 화면으로 이동한다", async () => {
@@ -124,6 +157,35 @@ function mockAdminFetch() {
         return jsonResponse({ activeUserCount: 123 });
       }
 
+      if (url.includes("/admin/users/daily-activity")) {
+        return jsonResponse({
+          dailyMetrics: [
+            {
+              date: "2026-05-16",
+              visitorCount: 10,
+              signupUserCount: 2,
+              memberCount: 100
+            },
+            {
+              date: "2026-05-17",
+              visitorCount: 12,
+              signupUserCount: 3,
+              memberCount: 103
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/admin/me")) {
+        return jsonResponse({
+          adminId: 1,
+          username: "admin",
+          passwordChangedAt: "2026-05-18T10:00:00",
+          createdAt: "2026-05-18T10:00:00",
+          updatedAt: "2026-05-18T10:00:00"
+        });
+      }
+
       if (url.includes("/admin/reports/collections")) {
         return jsonResponse({
           data: [
@@ -180,6 +242,21 @@ function mockAdminFetch() {
             totalPages: 1
           }
         });
+      }
+
+      if (url.includes("/admin/terms")) {
+        return jsonResponse([
+          {
+            id: 1,
+            type: "SERVICE",
+            context: "SIGNUP",
+            version: 1,
+            title: "서비스 이용약관 v1",
+            content: "서비스 이용약관 본문입니다.",
+            required: true,
+            activeAt: "2026-05-01T00:00:00"
+          }
+        ]);
       }
 
       return jsonResponse({});

@@ -7,6 +7,9 @@ export type UserModerationAction = "WARN" | "RESTRICT_UPLOAD" | "SUSPEND" | "KEE
 export type MediaType = "MOVIE" | "TV";
 export type TermsType = "SERVICE" | "PRIVACY" | "MARKETING" | "WITHDRAWAL";
 export type TermsContext = "SIGNUP" | "WITHDRAWAL";
+export type TermsSortBy = "VERSION" | "TYPE";
+export type SortDirection = "ASC" | "DESC";
+export type AdminDailyUserMetricsRange = "DAYS_7" | "DAYS_30" | "ALL";
 
 export interface PaginationResponse<T> {
   data: T[];
@@ -38,6 +41,31 @@ export interface AdminLoginRes {
 
 export interface AdminUserStatisticsRes {
   activeUserCount: number;
+}
+
+export interface AdminDailyUserMetricsRes {
+  dailyMetrics: AdminDailyUserMetricRes[];
+}
+
+export interface AdminDailyUserMetricRes {
+  date: string;
+  visitorCount: number;
+  signupUserCount: number;
+  memberCount: number;
+}
+
+export interface AdminMeRes {
+  adminId: number;
+  username: string;
+  passwordChangedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface AdminProfileUpdateReq {
+  username: string;
+  currentPassword: string;
+  newPassword?: string;
 }
 
 export interface AdminCollectionReportSummaryRes {
@@ -195,6 +223,12 @@ export interface TermsCreateReq {
   content: string;
   required: boolean;
   activeAt: string;
+}
+
+export interface TermsListParams {
+  type?: TermsType;
+  sortBy?: TermsSortBy;
+  direction?: SortDirection;
 }
 
 export interface TermsRes {
