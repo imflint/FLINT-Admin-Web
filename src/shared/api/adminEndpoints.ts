@@ -16,6 +16,9 @@ import type {
   AdminMeRes,
   AdminProfileUpdateReq,
   AdminRefreshTokenReq,
+  AdminUserDetailRes,
+  AdminUserModerationReq,
+  AdminUserSummaryRes,
   AdminUserStatisticsRes,
   CollectionModerationStatus,
   MediaType,
@@ -23,12 +26,15 @@ import type {
   ReportStatus,
   TermsCreateReq,
   TermsListParams,
-  TermsRes
+  TermsRes,
+  UserStatus
 } from "./adminTypes";
 
 export const adminQueryKeys = {
   me: ["admin", "me"] as const,
   userStatistics: ["admin", "users", "statistics"] as const,
+  users: (params: AdminUserListParams) => ["admin", "users", params] as const,
+  user: (userId: number) => ["admin", "users", userId] as const,
   dailyUserMetrics: (params: AdminDailyUserMetricsParams) => ["admin", "users", "daily-activity", params] as const,
   contents: (params: AdminContentListParams) => ["admin", "contents", params] as const,
   collections: (params: AdminCollectionListParams) => ["admin", "collections", params] as const,
@@ -49,6 +55,15 @@ export interface AdminCollectionListParams {
   keyword?: string;
   visibility?: AdminCollectionVisibility;
   moderationStatus?: CollectionModerationStatus;
+  page?: number;
+  size?: number;
+}
+
+export interface AdminUserListParams {
+  keyword?: string;
+  status?: UserStatus;
+  createdFrom?: string;
+  createdTo?: string;
   page?: number;
   size?: number;
 }
@@ -84,6 +99,21 @@ export function refreshAdminTokens(request: AdminRefreshTokenReq) {
 
 export function getAdminUserStatistics() {
   return adminApi<AdminUserStatisticsRes>("/admin/users/statistics");
+}
+
+export function getAdminUsers(params: AdminUserListParams = {}) {
+  return adminApi<PaginationResponse<AdminUserSummaryRes>>(withQuery("/admin/users", params));
+}
+
+export function getAdminUser(userId: number) {
+  return adminApi<AdminUserDetailRes>(`/admin/users/${userId}`);
+}
+
+export function moderateAdminUser(userId: number, request: AdminUserModerationReq) {
+  return adminApi<AdminUserDetailRes>(`/admin/users/${userId}/moderations`, {
+    method: "POST",
+    body: request
+  });
 }
 
 export function getAdminDailyUserMetrics(params: AdminDailyUserMetricsParams = {}) {

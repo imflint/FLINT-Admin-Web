@@ -33,6 +33,11 @@ const navigationItems: MenuProps["items"] = [
     label: <Link to="/admin/overview">대시보드</Link>
   },
   {
+    key: "/admin/users",
+    icon: <UserOutlined />,
+    label: <Link to="/admin/users">회원 관리</Link>
+  },
+  {
     key: "/admin/content",
     icon: <VideoCameraOutlined />,
     label: <Link to="/admin/content">컨텐츠</Link>

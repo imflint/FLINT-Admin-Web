@@ -36,7 +36,10 @@ describe("App routes", () => {
     renderRoute("/admin");
 
     expect(await screen.findByRole("heading", { name: "대시보드" })).toBeInTheDocument();
-    expect(await screen.findByText("일별 방문자·신규 가입·회원 수")).toBeInTheDocument();
+    expect(await screen.findByText("일별 사용자 지표")).toBeInTheDocument();
+    expect(screen.getAllByText("방문자").length).toBeGreaterThan(0);
+    expect(screen.getByText("신규 가입")).toBeInTheDocument();
+    expect(screen.getByText("회원 수")).toBeInTheDocument();
     expect(screen.getByText("7일")).toBeInTheDocument();
     expect(screen.getByText("30일")).toBeInTheDocument();
     expect(screen.getByText("전체")).toBeInTheDocument();
@@ -56,6 +59,15 @@ describe("App routes", () => {
 
     expect(await screen.findByRole("heading", { name: "신고 관리" })).toBeInTheDocument();
     expect(await screen.findByRole("cell", { name: "추천 컬렉션" })).toBeInTheDocument();
+  });
+
+  it("회원 관리 화면에 실제 회원 목록을 표시한다", async () => {
+    mockAdminFetch();
+    signInTestSession();
+    renderRoute("/admin/users");
+
+    expect(await screen.findByRole("heading", { name: "회원 관리" })).toBeInTheDocument();
+    expect(await screen.findByText("플린트")).toBeInTheDocument();
   });
 
   it("컬렉션 관리 화면에 실제 컬렉션 목록을 표시한다", async () => {
@@ -176,6 +188,28 @@ function mockAdminFetch() {
         });
       }
 
+      if (url.includes("/admin/users/10/moderations")) {
+        return jsonResponse(adminUserDetail);
+      }
+
+      if (url.includes("/admin/users/10")) {
+        return jsonResponse(adminUserDetail);
+      }
+
+      if (url.includes("/admin/users?") || url.endsWith("/admin/users")) {
+        return jsonResponse({
+          data: [adminUserSummary],
+          meta: {
+            type: "OFFSET",
+            returned: 1,
+            page: 1,
+            size: 10,
+            totalElements: 1,
+            totalPages: 1
+          }
+        });
+      }
+
       if (url.includes("/admin/me")) {
         return jsonResponse({
           adminId: 1,
@@ -263,6 +297,38 @@ function mockAdminFetch() {
     })
   );
 }
+
+const adminUserSummary = {
+  userId: 10,
+  nickname: "플린트",
+  profileImageUrl: null,
+  userRole: "FLINER",
+  status: "ACTIVE",
+  warningCount: 1,
+  uploadRestricted: false,
+  uploadRestrictedUntil: null,
+  suspended: false,
+  suspendedUntil: null,
+  createdAt: "2026-05-01T09:00:00"
+};
+
+const adminUserDetail = {
+  ...adminUserSummary,
+  uploadRestrictedAt: null,
+  suspendedAt: null,
+  deletedAt: null,
+  updatedAt: "2026-05-02T09:00:00",
+  recentModerations: [
+    {
+      historyId: 1,
+      adminId: 1,
+      action: "WARN",
+      actionExpiresAt: null,
+      adminMemo: "메모",
+      createdAt: "2026-05-02T10:00:00"
+    }
+  ]
+};
 
 function jsonResponse<T>(data: T) {
   return new Response(
