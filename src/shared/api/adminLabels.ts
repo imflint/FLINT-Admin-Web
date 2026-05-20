@@ -48,9 +48,8 @@ export const userStatusLabels: Record<UserStatus, string> = {
 };
 
 export const userRoleLabels: Record<UserRole, string> = {
-  ADMIN: "관리자",
-  FLINER: "일반 회원",
-  FLING: "게스트"
+  FLINER: "플리너",
+  FLING: "일반회원"
 };
 
 export const termsTypeLabels: Record<TermsType, string> = {

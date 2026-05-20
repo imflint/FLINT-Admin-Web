@@ -40,9 +40,6 @@ export function LoginPage() {
     <main className="login-page">
       <Card className="login-card">
         <Typography.Title level={1}>관리자 로그인</Typography.Title>
-        <Typography.Paragraph type="secondary">
-          Flint 운영자 콘솔에 접근하려면 관리자 계정으로 로그인해주세요.
-        </Typography.Paragraph>
         <Form<LoginFormValues> layout="vertical" requiredMark={false} onFinish={handleFinish}>
           <Form.Item label="아이디" name="username" rules={[{ required: true, message: "아이디를 입력해주세요." }]}>
             <Input autoComplete="username" />

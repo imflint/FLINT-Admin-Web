@@ -50,7 +50,6 @@ export function OverviewPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>대시보드</Typography.Title>
-          <Typography.Paragraph>방문자, 신규 가입, 회원 수 흐름을 한눈에 확인합니다.</Typography.Paragraph>
         </div>
       </header>
 

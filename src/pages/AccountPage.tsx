@@ -54,7 +54,6 @@ export function AccountPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>계정 설정</Typography.Title>
-          <Typography.Paragraph>관리자 로그인 아이디와 비밀번호를 변경합니다.</Typography.Paragraph>
         </div>
       </header>
 

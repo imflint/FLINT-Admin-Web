@@ -179,7 +179,6 @@ export function UsersPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>회원 관리</Typography.Title>
-          <Typography.Paragraph>회원 정보를 확인하고 필요한 조치를 기록합니다.</Typography.Paragraph>
         </div>
       </header>
 

@@ -11,7 +11,7 @@ export type TermsSortBy = "VERSION" | "TYPE";
 export type SortDirection = "ASC" | "DESC";
 export type AdminDailyUserMetricsRange = "DAYS_7" | "DAYS_30" | "ALL";
 export type UserStatus = "ACTIVE" | "WITHDRAWN";
-export type UserRole = "ADMIN" | "FLINER" | "FLING";
+export type UserRole = "FLINER" | "FLING";
 
 export interface PaginationResponse<T> {
   data: T[];

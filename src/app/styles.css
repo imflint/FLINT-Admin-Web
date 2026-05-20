@@ -59,15 +59,9 @@ textarea {
   font-weight: 800;
 }
 
-.admin-brand strong,
-.admin-brand small {
+.admin-brand strong {
   display: block;
   line-height: 1.2;
-}
-
-.admin-brand small {
-  margin-top: 3px;
-  color: #6b7280;
 }
 
 .admin-header {
@@ -84,6 +78,7 @@ textarea {
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-left: auto;
 }
 
 .admin-header-actions a {
@@ -122,11 +117,6 @@ textarea {
 
 .page-header h1 {
   margin: 0;
-}
-
-.page-header p {
-  margin: 6px 0 0;
-  color: #6b7280;
 }
 
 .metric-grid {

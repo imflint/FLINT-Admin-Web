@@ -8,7 +8,7 @@ import {
   VideoCameraOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Layout, Menu, Typography } from "antd";
+import { Button, Layout, Menu } from "antd";
 import type { MenuProps } from "antd";
 import type { ReactNode } from "react";
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router";
@@ -86,18 +86,14 @@ function AdminLayout() {
           <span className="admin-brand-mark">F</span>
           <span>
             <strong>Flint 관리자</strong>
-            <small>운영 관리</small>
           </span>
         </Link>
         <Menu mode="inline" selectedKeys={[selectedKey]} items={navigationItems} />
       </Sider>
       <Layout>
         <Header className="admin-header">
-          <Typography.Text type="secondary">Flint 운영 관리</Typography.Text>
           <div className="admin-header-actions">
-            <Typography.Text type="secondary">
-              가입 회원 {userStatisticsQuery.data?.activeUserCount ?? "-"}명
-            </Typography.Text>
+            <span className="member-count">가입 회원 {userStatisticsQuery.data?.activeUserCount ?? "-"}명</span>
             <Link to="/admin/account">
               <Button icon={<UserOutlined />}>계정 설정</Button>
             </Link>
