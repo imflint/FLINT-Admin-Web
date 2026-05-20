@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import MDEditor from "@uiw/react-md-editor/nohighlight";
+import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   App as AntApp,
@@ -19,6 +21,9 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { Dayjs } from "dayjs";
+import rehypeSanitize from "rehype-sanitize";
+import "@uiw/react-md-editor/markdown-editor.css";
+import "@uiw/react-markdown-preview/markdown.css";
 
 import { adminQueryKeys, createTerms, getTerms } from "../shared/api/adminEndpoints";
 import { termsContextLabels, termsTypeLabels } from "../shared/api/adminLabels";
@@ -46,6 +51,10 @@ interface TermsFilterState {
   sortBy: TermsSortBy;
   direction: SortDirection;
 }
+
+const markdownPreviewOptions = {
+  rehypePlugins: [rehypeSanitize]
+} satisfies Omit<MarkdownPreviewProps, "source">;
 
 export function TermsPage() {
   const { message } = AntApp.useApp();
@@ -152,7 +161,7 @@ export function TermsPage() {
             <Input maxLength={100} />
           </Form.Item>
           <Form.Item label="본문" name="content" rules={[{ required: true, message: "본문을 입력해주세요." }]}>
-            <Input.TextArea rows={8} />
+            <TermsMarkdownEditor />
           </Form.Item>
           <Form.Item
             label="적용 시작 시각"
@@ -173,6 +182,7 @@ export function TermsPage() {
       <Modal
         title={selectedTerms?.title}
         open={selectedTerms !== null}
+        width={760}
         footer={null}
         onCancel={() => setSelectedTerms(null)}
         destroyOnHidden
@@ -182,10 +192,33 @@ export function TermsPage() {
             <Typography.Text type="secondary">
               {termsTypeLabels[selectedTerms.type]} · {termsContextLabels[selectedTerms.context]} · 버전 {selectedTerms.version}
             </Typography.Text>
-            <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{selectedTerms.content}</Typography.Paragraph>
+            <div className="terms-markdown" data-color-mode="light">
+              <MDEditor.Markdown source={selectedTerms.content} {...markdownPreviewOptions} />
+            </div>
           </Space>
         ) : null}
       </Modal>
+    </div>
+  );
+}
+
+interface TermsMarkdownEditorProps {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+function TermsMarkdownEditor({ value = "", onChange }: TermsMarkdownEditorProps) {
+  return (
+    <div className="terms-markdown-editor" data-color-mode="light">
+      <MDEditor
+        value={value}
+        height={360}
+        preview="live"
+        visibleDragbar={false}
+        previewOptions={markdownPreviewOptions}
+        textareaProps={{ "aria-label": "본문" }}
+        onChange={(nextValue) => onChange?.(nextValue ?? "")}
+      />
     </div>
   );
 }
