@@ -42,7 +42,8 @@ export function OverviewPage() {
   });
   const selectedMetricLabel = dailyUserMetricOptions.find((option) => option.value === selectedMetric)?.label ?? "방문자";
   const chartData = toChartData(dailyUserMetricsQuery.data?.dailyMetrics, selectedMetric);
-  const chartMaxValue = resolveChartMaxValue(chartData);
+  const chartTicks = resolveChartTicks(chartData);
+  const chartDomain = resolveChartDomain(chartTicks);
 
   return (
     <div className="page-stack">
@@ -105,7 +106,7 @@ export function OverviewPage() {
               yField="value"
               height={320}
               shapeField="smooth"
-              scale={{ y: { domain: [0, chartMaxValue] } }}
+              scale={{ y: { domain: chartDomain, tickMethod: () => chartTicks } }}
               axis={{ y: { labelFormatter: formatCountLabel } }}
               tooltip={{
                 title: (item: { date?: string }) => item.date ?? "",
@@ -128,9 +129,21 @@ function toChartData(metrics: AdminDailyUserMetricRes[] = [], metricKey: DailyUs
   }));
 }
 
-function resolveChartMaxValue(data: { value: number }[]) {
-  const maxValue = Math.max(0, ...data.map((item) => item.value));
-  return maxValue > 0 ? maxValue : 1;
+function resolveChartTicks(data: { value: number }[]) {
+  const values = data.map((item) => Math.round(item.value));
+  const uniqueValues = Array.from(new Set(values)).sort((a, b) => a - b);
+  return uniqueValues.length > 0 ? uniqueValues : [0];
+}
+
+function resolveChartDomain(ticks: number[]) {
+  const minValue = ticks[0] ?? 0;
+  const maxValue = ticks[ticks.length - 1] ?? 0;
+
+  if (minValue === maxValue) {
+    return minValue === 0 ? [0, 1] : [0, minValue];
+  }
+
+  return [minValue, maxValue];
 }
 
 function formatCountLabel(value: string | number) {
