@@ -82,7 +82,6 @@ export function TermsPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>약관 관리</Typography.Title>
-          <Typography.Paragraph>등록된 약관을 확인하고 새 약관 버전을 추가합니다.</Typography.Paragraph>
         </div>
       </header>
 

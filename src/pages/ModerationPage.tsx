@@ -126,7 +126,6 @@ export function ModerationPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>신고 관리</Typography.Title>
-          <Typography.Paragraph>접수된 컬렉션 신고를 확인하고 필요한 조치를 기록합니다.</Typography.Paragraph>
         </div>
       </header>
 

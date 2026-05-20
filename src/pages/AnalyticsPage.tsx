@@ -6,7 +6,6 @@ export function AnalyticsPage() {
       <header className="page-header">
         <div>
           <Typography.Title level={1}>운영 지표</Typography.Title>
-          <Typography.Paragraph>운영 지표와 처리 이력 화면은 준비 중입니다.</Typography.Paragraph>
         </div>
       </header>
 
