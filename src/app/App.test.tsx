@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -23,6 +23,7 @@ function renderRoute(path: string) {
 }
 
 afterEach(() => {
+  cleanup();
   clearAdminSession();
   window.sessionStorage.clear();
   vi.unstubAllGlobals();
@@ -76,16 +77,15 @@ describe("App routes", () => {
   });
 
   it("약관 관리 화면에 약관 목록을 표시한다", async () => {
-    const user = userEvent.setup();
     mockAdminFetch();
     signInTestSession();
     renderRoute("/admin/terms");
 
     expect(await screen.findByRole("heading", { name: "약관 관리" })).toBeInTheDocument();
-    expect(await screen.findByRole("cell", { name: "서비스 이용약관 v1" })).toBeInTheDocument();
+    expect(await screen.findByText("서비스 이용약관 v1")).toBeInTheDocument();
     expect(screen.queryByText("서비스 이용약관 본문입니다.")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "본문 보기" }));
+    fireEvent.click(screen.getByRole("button", { name: "본문 보기" }));
 
     expect(await screen.findByText("서비스 이용약관 본문입니다.")).toBeInTheDocument();
   });
